@@ -46,6 +46,200 @@ const insights=(D,K)=>{const o=[],r=K.risk,rs=sum(r,c=>c.mrr);
   o.push({id:'pl',t:$k(K.wp)+' weighted pipeline',w:'Probability-weighted value of open deals. Closing everything in Negotiation would add '+$k(sum(D.ds.filter(d=>d.stage===3),d=>d.val))+' of MRR.',a:'Open pipeline',to:'pl'});
   if(K.gm<.75)o.push({id:'gm',t:'Gross margin is '+pc(K.gm*100),w:'Infrastructure and support costs take '+pc((1-K.gm)*100)+' of this month\'s revenue.',a:'See profitability',to:'pf'});
   return o};
+/* ---------- deterministic revenue scenarios: never present as validated predictions ---------- */
+const forecastClamp=(v,lo,hi)=>Math.min(hi,Math.max(lo,Number.isFinite(Number(v))?Number(v):lo));
+const forecastRates=(a)=>({
+  g:forecastClamp(a?.g,0,12),
+  c:forecastClamp(a?.c,0,8),
+  e:forecastClamp(a?.e,0,6)
+});
+const forecastModel=(start,rates,horizon=12)=>{
+  const a=forecastRates(rates);
+  const months=[6,12,24].includes(horizon)?horizon:12;
+  const initial=Math.max(0,Number.isFinite(Number(start))?Number(start):0);
+  const multiplier=Math.max(.01,1+(a.g+a.e-a.c)/100);
+  return Array.from({length:months+1},(_,i)=>Math.round(initial*Math.pow(multiplier,i)*100)/100);
+};
+const forecastCases=rates=>{
+  const a=forecastRates(rates);
+  return {
+    Bear:{g:Math.max(0,a.g-1.5),c:Math.min(8,a.c+1.2),e:Math.max(0,a.e-.6)},
+    Base:a,
+    Bull:{g:Math.min(12,a.g+1.5),c:Math.max(0,a.c-.8),e:Math.min(6,a.e+.8)}
+  };
+};
+const forecastNet=r=>(r.g+r.e-r.c);
+const forecastExportRows=(history,current,rates,horizon=12)=>{
+  const monthStamp=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  const months=[6,12,24].includes(horizon)?horizon:12,examples=forecastCases(rates),
+    runs=Object.fromEntries(Object.entries(examples).map(([name,r])=>[name,forecastModel(current,r,months)])),
+    rows=[['Month','Data type','Historical MRR','Bear MRR','Base MRR','Bull MRR']];
+  for(let i=0;i<history.length;i++){
+    const date=new Date(NOW.getFullYear(),NOW.getMonth()-(history.length-1-i),1);
+    rows.push([monthStamp(date),'Actual',history[i],'','','']);
+  }
+  for(let i=1;i<=months;i++){
+    const date=new Date(NOW.getFullYear(),NOW.getMonth()+i,1);
+    rows.push([monthStamp(date),'Illustrative projection','',runs.Bear[i],runs.Base[i],runs.Bull[i]]);
+  }
+  rows.push(['','','','','','']);
+  rows.push(['Scenario','New bookings % / month','Expansion % / month','Churn % / month','Ending MRR','Net change % / month']);
+  ['Bear','Base','Bull'].forEach(name=>{
+    const a=examples[name];
+    rows.push([name,a.g,a.e,a.c,runs[name][months],Number(forecastNet(a).toFixed(1))]);
+  });
+  rows.push(['Method','Compounding recurring revenue. Projections are illustrative, not statistical predictions.','','','','']);
+  return rows;
+};
+const forecastStyles={
+  Bear:{stroke:'var(--red)',label:'Downside'},
+  Base:{stroke:'var(--revenue)',label:'Baseline'},
+  Bull:{stroke:'var(--positive)',label:'Upside'}
+};
+
+function ForecastComparisonChart({history,curves,horizon,selected}){
+  const [hover,setHover]=useState(null),W=1000,H=340,left=70,right=22,top=30,bottom=42,
+    N=history.length+horizon,X=i=>left+i/(N-1)*(W-left-right),
+    values=[...history,...Object.values(curves).flat()],
+    low=Math.max(0,Math.min(...values)*.86),high=Math.max(...values)*1.11,
+    Y=v=>top+(high-v)/((high-low)||1)*(H-top-bottom),
+    path=(vals,offset)=>vals.map((v,i)=>(i?'L':'M')+X(offset+i).toFixed(2)+' '+Y(v).toFixed(2)).join(' '),
+    lastIdx=history.length-1,boundary=X(lastIdx),hoverIdx=hover==null?horizon:hover,
+    monthName=i=>new Date(NOW.getFullYear(),NOW.getMonth()+i,1).toLocaleString('en',{month:'short',year:i%12===0?'2-digit':undefined}),
+    observed=path(history,0);
+  const labels=Array.from({length:Math.floor((N-1)/3)+1},(_,i)=>Math.min(N-1,i*3));
+  if(!labels.includes(N-1))labels.push(N-1);
+  return h('div',{className:'forecast-visual'},
+    h('div',{className:'forecast-visual-meta'},
+      h('span',null,h('i',{className:'forecast-key historical-key'}),'Historical MRR'),
+      ['Bear','Base','Bull'].map(name=>h('span',{key:name,className:selected===name?'forecast-meta-selected':''},
+        h('i',{className:'forecast-key',style:{background:forecastStyles[name].stroke}}),name)),
+      h('span',{className:'forecast-hover-meta'},
+        hover==null?'Hover to inspect a modelled month':
+        monthName(hoverIdx)+' · '+selected+' '+$k(curves[selected][hoverIdx]))),
+    h('div',{className:'forecast-graph-scroller',tabIndex:0,'aria-label':'Scrollable revenue prediction chart'},
+      h('svg',{viewBox:'0 0 '+W+' '+H,className:'forecast-svg','aria-label':'Historical MRR and illustrative Bear, Base and Bull scenarios over '+horizon+' months',role:'img',
+      onMouseMove:e=>{
+        const b=e.currentTarget.getBoundingClientRect(),unit=(e.clientX-b.left)/Math.max(b.width,1)*W,
+          month=Math.round((unit-boundary)/(X(N-1)-boundary)*horizon);
+        setHover(Math.min(horizon,Math.max(0,month)));
+      },onMouseLeave:()=>setHover(null)},
+      h('rect',{x:boundary,y:top,width:W-right-boundary,height:H-top-bottom,fill:'var(--forecast-zone)'}),
+      [0,1,2,3,4].map(t=>{
+        const value=low+(high-low)*t/4;
+        return h('g',{key:t},h('line',{x1:left,x2:W-right,y1:Y(value),y2:Y(value),stroke:'var(--line)',strokeWidth:1}),
+          h('text',{x:left-12,y:Y(value)+4,fontSize:12,fill:'var(--mut)',textAnchor:'end'},$k(value)));
+      }),
+      h('line',{x1:boundary,y1:top,x2:boundary,y2:H-bottom,stroke:'var(--mut)',strokeDasharray:'5 6',opacity:.65}),
+      h('text',{x:left+4,y:17,fontSize:12,fill:'var(--mut)'},'ACTUAL'),
+      h('text',{x:boundary+64,y:17,fontSize:12,fill:'var(--mut)'},'MODELLED · NOT A GUARANTEE'),
+      h('path',{d:observed,fill:'none',stroke:'var(--fg)',strokeWidth:3,strokeLinejoin:'round',strokeLinecap:'round'}),
+      ['Bear','Bull','Base'].map(name=>h('path',{key:name,d:path(curves[name],lastIdx),fill:'none',
+        stroke:forecastStyles[name].stroke,strokeWidth:name===selected?3.5:2,opacity:name===selected?1:.68,
+        strokeDasharray:name===selected?'':'6 6',strokeLinejoin:'round',strokeLinecap:'round'})),
+      h('circle',{cx:boundary,cy:Y(history[lastIdx]),r:5,stroke:'var(--fg)',strokeWidth:2,fill:'var(--bg)'}),
+      h('line',{x1:X(lastIdx+hoverIdx),y1:top,x2:X(lastIdx+hoverIdx),y2:H-bottom,stroke:'var(--mut)',strokeDasharray:'3 5',opacity:hover==null?0:.55}),
+      h('circle',{cx:X(lastIdx+hoverIdx),cy:Y(curves[selected][hoverIdx]),r:hover==null?5:6,stroke:forecastStyles[selected].stroke,strokeWidth:3,fill:'var(--bg)'}),
+      labels.map(i=>h('text',{key:i,x:X(i),y:H-13,textAnchor:'middle',fill:'var(--mut)',fontSize:12},i===lastIdx?'Now':monthName(i-11))),
+      h('rect',{x:boundary-46,y:top-23,width:92,height:17,rx:6,fill:'var(--bg)',stroke:'var(--line)'}),
+      h('text',{x:boundary,y:top-11,textAnchor:'middle',fill:'var(--mut)',fontSize:11},'TODAY')
+    )),
+    h('div',{className:'forecast-scroll-hint'},'Swipe or scroll the chart to inspect later months →'),
+    h('p',{className:'forecast-caption'},'Illustrative compounding model. Each line uses monthly new business + expansion − churn. The scenario spread is not a statistical confidence interval.')
+  );
+}
+
+function PredictionsStudio({history,mrr,assumptions,onChange,onRestore,onNavigate,onExport}){
+  const [horizon,setHorizon]=useState(12),[selected,setSelected]=useState('Base'),
+    cases=forecastCases(assumptions),
+    curves=Object.fromEntries(Object.entries(cases).map(([name,r])=>[name,forecastModel(mrr,r,horizon)])),
+    end=curves[selected][horizon],baseEnd=curves.Base[horizon],difference=end-mrr,
+    lower=curves.Bear[horizon],upper=curves.Bull[horizon],
+    net=forecastNet(cases[selected]),
+    churnStress=forecastModel(mrr,{...cases.Base,c:Math.min(8,cases.Base.c+1)},horizon)[horizon],
+    growthStress=forecastModel(mrr,{...cases.Base,g:Math.min(12,cases.Base.g+1)},horizon)[horizon],
+    period=new Date(NOW.getFullYear(),NOW.getMonth()+horizon,1).toLocaleString('en',{month:'long',year:'numeric'});
+  const stat=(label,value,small,tone='')=>h('div',{className:'forecast-kpi',key:label},
+    h('div',{className:'mut text-xs'},label),
+    h('strong',{className:'forecast-kpi-value tn '+tone},value),
+    h('div',{className:'mut text-xs'},small));
+  const slider=(key,title,max,desc)=>{
+    const value=forecastRates(assumptions)[key];
+    return h('div',{key,className:'forecast-setting'},
+      h('div',{className:'flex justify-between items-baseline gap-3'},
+        h('label',{htmlFor:'forecast-'+key,className:'forecast-label'},title),
+        h('strong',{className:'tn text-sm'},value.toFixed(1)+'%')),
+      h('input',{id:'forecast-'+key,type:'range',min:0,max,step:.1,value,
+        onChange:e=>onChange(key,forecastClamp(e.target.value,0,max)),
+        className:'forecast-slider w-full','aria-label':title+' monthly rate'}),
+      h('div',{className:'mut text-xs'},desc));
+  };
+  return h('div',{className:'prediction-studio space-y-4'},
+    h('div',{className:'forecast-toolbar'},
+      h('div',null,h('div',{className:'forecast-eyebrow'},'SCENARIO LAB / LOCAL SIMULATION'),
+        h('div',{className:'forecast-toolbar-title'},'Model the next '+horizon+' months'),
+        h('div',{className:'mut text-xs mt-1'},'Start from '+$k(mrr)+' current MRR · '+period)),
+      h('div',{className:'forecast-horizon',role:'group','aria-label':'Forecast horizon'},
+        [6,12,24].map(n=>h('button',{key:n,className:'forecast-horizon-button','aria-pressed':horizon===n,onClick:()=>setHorizon(n)},n+'m')))),
+    h('div',{className:'grid grid-cols-2 lg:grid-cols-4 gap-3'},
+      stat('Current MRR',$k(mrr),'From active subscription records'),
+      stat(selected+' MRR · '+horizon+' months',$k(end),'Forecast ending '+period),
+      stat('Annualized run rate',$k(end*12),'Ending MRR × 12'),
+      stat('Change vs today',(difference>=0?'+':'')+$k(difference),(difference>=0?'+':'')+(100*difference/(mrr||1)).toFixed(1)+'% of current MRR',difference<0?'red':'')),
+    h('div',{className:'forecast-main-grid'},
+      h('section',{className:'gl forecast-graph-card'},
+        h('div',{className:'forecast-graph-heading'},
+          h('div',null,h('h2',{className:'section-title'},'Revenue outlook'),
+            h('p',{className:'mut text-xs mt-1'},'Twelve observed months plus scenario projections')),
+          h('div',{className:'forecast-preset-controls',role:'group','aria-label':'Scenario selection'},
+            ['Bear','Base','Bull'].map(name=>h('button',{key:name,type:'button',className:'forecast-scenario-button','aria-pressed':selected===name,onClick:()=>setSelected(name)},
+              name)))),
+        h(ForecastComparisonChart,{history,curves,horizon,selected}),
+        h('div',{className:'forecast-graph-footer'},
+          h('div',null,h('div',{className:'mut text-xs'},selected+' net monthly growth'),h('strong',{className:'tn'},(net>=0?'+':'')+net.toFixed(1)+'%')),
+          h('div',null,h('div',{className:'mut text-xs'},'Projected MRR range'),h('strong',{className:'tn'},$k(lower)+' – '+$k(upper))),
+          h('div',null,h('div',{className:'mut text-xs'},'Selected change'),h('strong',{className:'tn'},(difference>=0?'+':'')+$k(difference))))),
+      h('aside',{className:'gl forecast-assumptions'},
+        h('div',{className:'flex items-start justify-between gap-2'},h('div',null,
+          h('h2',{className:'section-title'},'Assumptions'),
+          h('p',{className:'mut text-xs mt-1'},'Edit the Base case; other cases adjust around it.')),
+          h('button',{className:'text-xs mut underline underline-offset-4 hover:text-[var(--fg)]',onClick:onRestore},'Restore defaults')),
+        slider('g','New bookings',12,'Monthly contribution from new customers'),
+        slider('e','Expansion',6,'Added recurring revenue from existing accounts'),
+        slider('c','Churn',8,'Recurring revenue lost each month'),
+        h('div',{className:'forecast-net'},
+          h('span',{className:'mut text-xs'},'Base monthly net growth'),
+          h('strong',{className:'tn'},(forecastNet(cases.Base)>=0?'+':'')+forecastNet(cases.Base).toFixed(1)+'%')),
+        h('div',{className:'mut text-xs leading-relaxed mt-4'},'Assumptions are saved locally in this browser. No payment, customer account or external system is changed.'))),
+    h('section',{className:'gl forecast-comparison-card'},
+      h('div',{className:'flex items-start justify-between gap-3 flex-wrap'},
+        h('div',null,h('h2',{className:'section-title'},'Compare the outcomes'),
+          h('p',{className:'mut text-xs mt-1'},'Three deterministic cases based on the rates above—not probabilities.')),
+        h('button',{className:'btn g text-xs',onClick:()=>onExport(horizon,assumptions,mrr,history)},'Export scenarios CSV')),
+      h('div',{className:'forecast-cases',role:'group','aria-label':'Scenario results'},
+        ['Bear','Base','Bull'].map(name=>{
+          const rates=cases[name],v=curves[name][horizon],delta=v-mrr,active=name===selected;
+          return h('button',{key:name,type:'button',className:'forecast-case'+(active?' forecast-case-active':''),'aria-pressed':active,onClick:()=>setSelected(name)},
+            h('div',{className:'flex justify-between items-center gap-2'},
+              h('span',{className:'forecast-case-name'},h('i',{className:'forecast-case-dot',style:{background:forecastStyles[name].stroke}}),name),
+              h('span',{className:'mut text-xs'},forecastStyles[name].label)),
+            h('strong',{className:'forecast-case-value tn'},$k(v)),
+            h('span',{className:'text-xs '+(delta<0?'red':'mut')},(delta>=0?'+':'')+$k(delta)+' vs today'),
+            h('span',{className:'mut text-xs mt-2'},'New '+rates.g.toFixed(1)+'% · Expansion '+rates.e.toFixed(1)+'% · Churn '+rates.c.toFixed(1)+'%'));
+        }))),
+    h('section',{className:'forecast-sensitivity'},
+      h('div',null,h('h2',{className:'section-title'},'What changes the outcome?'),
+        h('p',{className:'mut text-xs mt-2'},'Sensitivity of the Base case to one percentage-point monthly assumption changes.')),
+      h('div',{className:'forecast-sensitivity-pills'},
+        h('div',null,h('span',{className:'mut text-xs'},'Churn +1pp'),h('strong',{className:'tn red'},$k(churnStress-baseEnd))),
+        h('div',null,h('span',{className:'mut text-xs'},'New business +1pp'),h('strong',{className:'tn'},'+'+$k(growthStress-baseEnd))))),
+    h('div',{className:'flex flex-wrap justify-between items-center gap-3 mt-2 mb-8'},
+      h('p',{className:'mut text-xs max-w-3xl leading-relaxed'},
+        'Method: compounding current MRR by new bookings + expansion − churn each month. Historical observations come from local records. No training data, seasonality, error bounds or market forecasts are claimed.'),
+      h('button',{className:'btn g text-xs',onClick:()=>onNavigate('sub')},'Inspect subscriptions →'))
+  );
+}
+
 /* ---------- charts ---------- */
 function Lines({S,L,f=$k,H=230,W=640}){const[hi,setHi]=useState(null),id=useId().replace(/:/g,''),P=46,n=L.length,all=S.flatMap(s=>s.d.filter(v=>v!=null)),mn=Math.min(0,...all),mx=Math.max(...all)*1.08||1,X=i=>P+i/(n-1)*(W-P-10),Y=v=>H-24-(v-mn)/(mx-mn||1)*(H-44);
   const tt=hi!=null?L[hi]+'   '+S.map(s=>s.d[hi]!=null?s.n+' '+f(s.d[hi]):'').filter(Boolean).join('   '):'';
@@ -93,7 +287,7 @@ function Skyline({rp,ex,pr,fc,L,mode,onBar,q}){
       const tone=new THREE.Color(color),side=tone.clone().multiplyScalar(.72),back=tone.clone().multiplyScalar(.58),top=tone.clone().multiplyScalar(1.06);
       return [side,side,tone.clone(),back,tone.clone(),side].map(c=>new THREE.MeshBasicMaterial({color:c,toneMapped:false}));
     };
-    const bar=(w,h,color)=>{const g=new THREE.BoxGeometry(w,Math.max(.018,h),.36);g.translate(0,Math.max(.018,h)/2,0);return new THREE.Mesh(g,material(color));};
+    const bar=(w,h,color)=>{const g=new THREE.BoxGeometry(w,Math.max(.018,h),.35);g.translate(0,Math.max(.018,h)/2,0);return new THREE.Mesh(g,material(color));};
     const edge=(mesh,color,opacity=.35)=>{const e=new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry),new THREE.LineBasicMaterial({color,transparent:true,opacity,depthWrite:false}));mesh.add(e);};
     const top=(g,y,color,w=.5)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,.028,.38),new THREE.MeshBasicMaterial({color}));m.position.y=y;g.add(m);};
     R.build=(rp,ex,pr,fc,L,mode)=>{
@@ -102,7 +296,7 @@ function Skyline({rp,ex,pr,fc,L,mode,onBar,q}){
       const count=mode==='profit'?12:12+fc.length,pitch=.84,x0=-(count-1)*pitch/2;
       const maxi=Math.max(1,...totals,...ex,...fc),profitMax=Math.max(1,...pr.map(Math.abs));
       const unit=3.72/maxi,profitUnit=1.8/profitMax;
-      const shades=[0x6d6a63,0x8f8b82,0xd9b59a,0xf3eee3];
+      const shades=[0x605b56,0x867568,0xaf917b,0xd4b79a];
       for(let i=0;i<count;i++){
         const predicted=i>=12,x=x0+i*pitch;
         const group=new THREE.Group();group.position.x=x;group.userData.delay=i*.032;
@@ -111,13 +305,13 @@ function Skyline({rp,ex,pr,fc,L,mode,onBar,q}){
         if(mode==='profit'){
           const v=pr[i],height=Math.max(.022,Math.abs(v)*profitUnit),col=v>=0?0x8fae8b:0xe5484d;
           group.position.y=1.12;
-          const mesh=bar(.4,height,col);if(v<0)mesh.position.y=-height;
+          const mesh=bar(.36,height,col);if(v<0)mesh.position.y=-height;
           edge(mesh,v>=0?0xc2d0be:0xff8990,.32);add(mesh);
           top(group,v>=0?height:-height,v>=0?0xb5cdb0:0xff898f,.41);
         }else if(predicted){
-          const height=Math.max(.025,fc[i-12]*unit),mesh=bar(.4,height,0x8f8b82);
+          const height=Math.max(.025,fc[i-12]*unit),mesh=bar(.37,height,0x727679);
           edge(mesh,0xe2d9cc,.38);add(mesh);
-          top(group,height,0xb7aea3,.41);
+          top(group,height,0xa8a7a3,.38);
         }else if(mode==='vs'){
           const values=[totals[i],ex[i]],colors=[0xd9b59a,0xe5484d];
           values.forEach((v,idx)=>{
@@ -126,11 +320,11 @@ function Skyline({rp,ex,pr,fc,L,mode,onBar,q}){
           });
         }else{
           let base=0;
-          rp[i].forEach((value,p)=>{if(value<=0)return;const height=Math.max(.012,value*unit),mesh=bar(.4,height,shades[p]);mesh.position.y=base;edge(mesh,0xf1deca,.14);add(mesh);base+=height;});
-          if(base>0)top(group,base,0xf1dfc9,.42);
+          rp[i].forEach((value,p)=>{if(value<=0)return;const height=Math.max(.012,value*unit),mesh=bar(.36,height,shades[p]);mesh.position.y=base;edge(mesh,0xf1deca,.14);add(mesh);base+=height;});
+          if(base>0)top(group,base,0xebccab,.37);
           /* An expense marker, not a second transparent tower over the revenue. */
           const expenseY=ex[i]*unit;
-          const mark=new THREE.Mesh(new THREE.BoxGeometry(.47,.025,.045),new THREE.MeshBasicMaterial({color:0xe5484d,transparent:true,opacity:.86,depthWrite:false}));
+          const mark=new THREE.Mesh(new THREE.BoxGeometry(.40,.022,.045),new THREE.MeshBasicMaterial({color:0xe5484d,transparent:true,opacity:.86,depthWrite:false}));
           mark.position.set(0,expenseY,.34);group.add(mark);
         }
       }
@@ -237,7 +431,7 @@ function Ambient({q}){const ref=useRef();useEffect(()=>{if(q==='off')return;cons
   const size=()=>{r.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()};size();addEventListener('resize',size);
   const m={x:0,y:0},mv=e=>{m.x=e.clientX/innerWidth-.5;m.y=e.clientY/innerHeight-.5};addEventListener('pointermove',mv);let raf;
   (function loop(t){if(document.hidden){raf=requestAnimationFrame(loop);return;}cam.position.x+=(m.x*2-cam.position.x)*.03;cam.position.y+=(3-m.y*1.2-cam.position.y)*.03;cam.lookAt(0,-.5,-4);if(!reduceM){gd.position.z=(t*.0006)%1;pts.rotation.y=t*.00003}r.render(sc,cam);raf=requestAnimationFrame(loop)})(0);
-  return()=>{cancelAnimationFrame(raf);removeEventListener('resize',size);removeEventListener('pointermove',mv);r.dispose();if(r.domElement.parentNode===el)el.removeChild(r.domElement)}},[q]);return h('div',{ref,'aria-hidden':true,style:{position:'fixed',inset:0,zIndex:0,pointerEvents:'none',opacity:.55}})}
+  return()=>{cancelAnimationFrame(raf);removeEventListener('resize',size);removeEventListener('pointermove',mv);gd.geometry.dispose();gd.material.dispose();pts.geometry.dispose();pts.material.dispose();r.dispose();if(r.domElement.parentNode===el)el.removeChild(r.domElement)}},[q]);return h('div',{ref,'aria-hidden':true,style:{position:'fixed',inset:0,zIndex:0,pointerEvents:'none',opacity:.55}})}
 function Board({ds,move}){
   const[dr,setDr]=useState(null),[sel,setSel]=useState(0),sc=useRef(),refs=useRef([]),dref=useRef(null),ini=n=>n.split(' ').map(x=>x[0]).join('').slice(0,2);
   const start=(e,d)=>{if(e.button!==0||(e.target&&e.target.tagName==='SELECT'))return;const r=e.currentTarget.getBoundingClientRect(),o={id:d.id,x:e.clientX,y:e.clientY,ox:e.clientX-r.left,oy:e.clientY-r.top,w:r.width,vx:0,over:null,moved:false,sx:e.clientX,sy:e.clientY};dref.current=o;setDr(o);try{e.currentTarget.setPointerCapture(e.pointerId)}catch(x){}};
@@ -260,7 +454,7 @@ const Ic=({d,s=17})=>h('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none',s
 const IC={cc:'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z',rev:'M4 20V10M10 20V4M16 20v-8M22 20H2',ins:'M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2z',fc:'M3 17l6-6 4 4 8-9M15 6h6v6',crm:'M9 11a3 3 0 100-6 3 3 0 000 6zM3 20c0-3 3-5 6-5s6 2 6 5M17 8a2.5 2.5 0 110 5M21 19c0-2-1.5-3.5-3.5-4',pl:'M4 4h5v16H4zM10 4h5v10h-5zM16 4h5v6h-5z',ret:'M4 12a8 8 0 018-8 8 8 0 016 2.7M20 12a8 8 0 01-8 8 8 8 0 01-6-2.7M18 3v4h-4M6 21v-4h4',sub:'M12 3l9 5-9 5-9-5zM3 13l9 5 9-5',tx:'M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4',pf:'M12 3a9 9 0 109 9h-9zM13 3.1A9 9 0 0120.9 11H13z',rp:'M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h7',st:'M4 7h10M18 7h2M4 17h2M10 17h10M14 5v4M8 15v4',mk:'M3 11l18-7v16L3 13zM7 14v5',auto:'M13 2L4 14h7l-1 8 9-12h-7z',int:'M9 7V3M15 7V3M7 7h10v4a5 5 0 01-10 0zM12 16v5',team:'M9 11a3 3 0 100-6 3 3 0 000 6zM3 20c0-3 3-5 6-5s6 2 6 5M17 8a2.5 2.5 0 110 5M21 19c0-2-1.5-3.5-3.5-4',menu:'M4 7h16M4 12h16M4 17h16',search:'M11 4a7 7 0 100 14 7 7 0 000-14zM20 20l-4-4',x:'M6 6l12 12M18 6L6 18'};
 const PAGES=[
   ['Command Center',[['cc','Command Center']]],
-  ['Revenue',[['rev','Analytics'],['fc','Forecasting'],['sub','Subscriptions'],['tx','Transactions'],['pf','Profitability'],['rp','Reports']]],
+  ['Revenue',[['rev','Analytics'],['fc','Predictions'],['sub','Subscriptions'],['tx','Transactions'],['pf','Profitability'],['rp','Reports']]],
   ['Customers',[['crm','Accounts'],['pl','Pipeline'],['ret','Retention'],['mk','Marketing']]],
   ['Intelligence',[['ins','Signals']]],
   ['Operations',[['auto','Automations'],['int','Integrations']]],
@@ -271,7 +465,7 @@ const navContext=(n)=>PAGES.find(g=>g[1].some(p=>p[0]===n))||PAGES[0];
 const FLAT=PAGES.flatMap(g=>g[1]);
 /* ---------- app ---------- */
 function App(){
-  const[D,setD]=useState(load),[pal,setPal]=useState(false),[pq,setPq]=useState(''),[pi,setPi]=useState(0),[cid,setCid]=useState(null),[toast,setToast]=useState(''),[q,setQ]=useState(''),[tf,setTf]=useState('all'),[mo,setMo]=useState('all'),[dr,setDr]=useState(null),[stab,setStab]=useState('workspace'),[rf,setRf]=useState('all'),[nt,setNt]=useState(''),[fm,setFm]=useState(null),[qual,setQual]=useState('high'),[igm,setIgm]=useState(null),[hmode,setHmode]=useState('plan'),[isel,setIsel]=useState(null),[sy,setSy]=useState(null),[ifl,setIfl]=useState('all'),[iq2,setIq2]=useState('');
+  const[D,setD]=useState(load),[pal,setPal]=useState(false),[pq,setPq]=useState(''),[pi,setPi]=useState(0),[cid,setCid]=useState(null),[toast,setToast]=useState(''),[q,setQ]=useState(''),[tf,setTf]=useState('all'),[mo,setMo]=useState('all'),[dr,setDr]=useState(null),[stab,setStab]=useState('workspace'),[rf,setRf]=useState('all'),[nt,setNt]=useState(''),[fm,setFm]=useState(null),[qual,setQual]=useState('high'),[igm,setIgm]=useState(null),[hmode,setHmode]=useState('plan'),[isel,setIsel]=useState(null),[sy,setSy]=useState(null),[ifl,setIfl]=useState('all'),[iq2,setIq2]=useState(''),[signalFilter,setSignalFilter]=useState('All');
   const mainRef=useRef(null);
   const K2=calc(D),nav=D.nav,flash=m=>{setToast(m);clearTimeout(flash.t);flash.t=setTimeout(()=>setToast(''),3200)};
   const up=(fn,msg)=>setD(d=>{const n=fn(d);return msg?{...n,log:[{m:msg,ts:Date.now()},...n.log].slice(0,80)}:n});
@@ -364,7 +558,9 @@ function App(){
         h('section',{className:'gl p-5 lg:col-span-7'},
           h('div',{className:'flex items-start justify-between gap-3'},
             h('div',null,h('h2',{className:'section-title'},'Revenue movement'),h('div',{className:'mut text-xs mt-1'},MO[a5]+' to '+MO[11]+' · Changes in recurring revenue')),
-            h('button',{className:'text-xs mut underline underline-offset-4 hover:text-[var(--fg)]',onClick:()=>go('rev')},'Explore revenue')),
+            h('div',{className:'flex gap-4 items-center'},
+              h('button',{className:'forecast-link',onClick:()=>go('fc')},'Open Predictions ↗'),
+              h('button',{className:'text-xs mut underline underline-offset-4 hover:text-[var(--fg)]',onClick:()=>go('rev')},'Revenue details'))),
           h(Wf,{S:bridge,H:198})),
         h('section',{className:'gl p-5 lg:col-span-5'},
           h('div',{className:'flex justify-between gap-3 items-center mb-2'},h('h2',{className:'section-title'},'Needs attention'),
@@ -400,7 +596,10 @@ function App(){
       ordered=[...ins].sort((x,y)=>({risk:0,inv:1,an:2,gm:3,exp:4,pl:5}[x.id]??6)-({risk:0,inv:1,an:2,gm:3,exp:4,pl:5}[y.id]??6)),
       kind=id=>id==='risk'||id==='inv'||id==='gm'?'Attention':id==='an'?'Variance':id==='exp'?'Opportunity':'Pipeline';
     return h('div',{className:'pg space-y-4'},
-      H1('Intelligence',h('span',{className:'mut text-xs'},ins.length+' active signals'),'Prioritized financial signals calculated from your workspace records.'),
+      H1('Intelligence',h('div',{className:'flex gap-3 items-center flex-wrap'},
+        h('span',{className:'mut text-xs'},ins.length+' active signals'),
+        h('button',{className:'forecast-link',onClick:()=>go('fc')},'Open Predictions ↗')),
+      'Prioritized financial signals calculated from your workspace records.'),
       h('div',{className:'grid grid-cols-1 sm:grid-cols-3 gap-3'},
         h('div',{className:'gl intelligence-stat'},h('div',{className:'mut text-xs'},'Revenue exposed'),h('div',{className:'intelligence-value red tn'},$k(riskAmount)),h('div',{className:'mut text-xs mt-2'},K2.risk.length+' at-risk accounts')),
         h('div',{className:'gl intelligence-stat'},h('div',{className:'mut text-xs'},'Expansion opportunity'),h('div',{className:'intelligence-value tn'},$k(upside)),h('div',{className:'mut text-xs mt-2'},expAccounts.length+' qualifying accounts')),
@@ -408,8 +607,12 @@ function App(){
       h('div',{className:'flex flex-wrap justify-between items-end gap-3 pt-2'},
         h('div',null,h('h2',{className:'section-title'},'Priority signals'),h('div',{className:'mut text-xs mt-1'},'Understand the impact before taking action.')),
         h('span',{className:'mut text-xs'},'Updated from local records')),
+      h('div',{className:'signal-filters',role:'group','aria-label':'Filter financial signals'},
+        ['All','Attention','Opportunity','Pipeline','Variance'].map(group=>h('button',{key:group,type:'button',
+          className:'signal-filter','aria-pressed':signalFilter===group,onClick:()=>setSignalFilter(group)},
+          group,group==='All'?' · '+ordered.length:' · '+ordered.filter(i=>kind(i.id)===group).length))),
       h('div',{className:'grid md:grid-cols-2 gap-3'},
-        ordered.map((i,idx)=>h('article',{key:i.id,className:'gl insight-card'},
+        ordered.filter(i=>signalFilter==='All'||kind(i.id)===signalFilter).map((i,idx)=>h('article',{key:i.id,className:'gl insight-card'},
           h('div',{className:'flex items-center justify-between gap-3'},
             h('span',{className:'insight-category '+(kind(i.id)==='Attention'?'insight-attention':'')},kind(i.id)),
             h('span',{className:'mut text-[11px]'},String(idx+1).padStart(2,'0'))),
@@ -418,15 +621,23 @@ function App(){
           h('div',{className:'flex flex-wrap gap-2 mt-auto pt-5 items-center'},
             h('button',{className:'btn g text-xs',onClick:()=>go(i.to)},i.a+' →'),
             (i.id==='risk'||i.id==='exp')&&h('button',{className:'text-xs mut underline underline-offset-4 hover:text-[var(--fg)] px-2',onClick:()=>apply(i)},i.id==='risk'?'Simulate follow-ups':'Simulate upgrades'))))),
+      !ordered.some(i=>signalFilter==='All'||kind(i.id)===signalFilter)&&
+        h('div',{className:'gl signal-empty md:col-span-2'},
+          h('strong',null,'No '+signalFilter.toLowerCase()+' signals'),
+          h('p',{className:'mut text-sm mt-2'},'There are no active records in this category. Try All signals.'),
+          h('button',{className:'btn g text-xs mt-3',onClick:()=>setSignalFilter('All')},'Show all signals')),
       h('div',{className:'mut text-xs leading-relaxed pb-5'},'Actions change only this browser workspace. Bulk follow-ups and upgrades require confirmation before changing health scores, plans or MRR.')
     );
   };
-  pgs.fc=()=>{const a=D.as,net=1+(a.g-a.c+a.e)/100,proj=Array.from({length:13},(_,k)=>K2.mrr*Math.pow(net,k)),S=[{n:'MRR',d:[...K2.mrrS,...Array(12).fill(null)],c:'var(--fg)',fill:1},{n:'Projected',d:[...Array(11).fill(null),K2.mrr,...proj.slice(1)],c:'var(--revenue)',dash:'5 4'}],L2=[...MO,...Array.from({length:12},(_,i)=>new Date(NOW.getFullYear(),NOW.getMonth()+1+i,1).toLocaleString('en',{month:'short'}))],set=p=>setD(d=>({...d,as:{...d.as,...p}})),done=()=>up(d=>d,'Forecast assumptions updated');
-    const sl=(k,l,mx)=>h('div',{key:k,className:'py-3'},h('div',{className:'flex justify-between mb-1'},h('label',{htmlFor:'s'+k},l),h('span',{className:'tn'},a[k].toFixed(1)+'% / mo')),h('input',{id:'s'+k,type:'range',min:0,max:mx,step:.1,value:a[k],className:'w-full !p-0 !border-0',onChange:e=>set({[k]:+e.target.value}),onPointerUp:done,onKeyUp:done}));
-    return h('div',{className:'pg space-y-4'},H1('Forecasting',['Bear','Base','Bull'].map((n,i)=>h('button',{key:n,className:'chip',onClick:()=>{set([{g:1.5,c:3,e:.5},{g:4,c:1.8,e:1.2},{g:7,c:1.2,e:2}][i]);done()}},n))),
-      h('div',{className:'grid lg:grid-cols-12 gap-4'},h('div',{className:'gl p-5 lg:col-span-8'},h('div',{className:'serif text-2xl mb-2'},'MRR trajectory'),h(Lines,{S,L:L2,H:260})),
-        h('div',{className:'gl p-5 lg:col-span-4'},h('div',{className:'serif text-2xl'},'Assumptions'),h('div',{className:'mut text-xs mb-2'},'Monthly rates applied to current MRR'),sl('g','New business',12),sl('c','Churn',8),sl('e','Expansion',6),h('div',{className:'border-t hair mt-3 pt-3 mut text-xs'},'Net monthly growth '+pc((net-1)*100))))
-      ,h('div',{className:'gl grid grid-cols-2 lg:grid-cols-4'},Kpi('MRR in 12 months',$k(proj[12]),dl(proj[12],K2.mrr).replace('last month','today')),Kpi('ARR in 12 months',$k(proj[12]*12),'From '+$k(K2.arr)+' today'),Kpi('Added over 12 months',$k(proj[12]-K2.mrr),'Net of churn and expansion'),Kpi('Pipeline already in hand',$k(K2.wp),'Weighted open deals')))};
+  pgs.fc=()=>h('div',{className:'pg space-y-4'},
+    H1('Predictions',h('button',{className:'btn g text-xs',onClick:()=>go('rev')},'← Revenue analytics'),
+      'Explore possible recurring-revenue outcomes, change assumptions, and compare downside and upside scenarios.'),
+    h(PredictionsStudio,{
+      history:K2.mrrS,mrr:K2.mrr,assumptions:D.as,onNavigate:go,
+      onChange:(key,value)=>setD(d=>({...d,as:{...d.as,[key]:value}})),
+      onRestore:()=>setD(d=>({...d,as:{g:4,c:1.8,e:1.2}})),
+      onExport:(horizon,rates,mrr,history)=>save('revenueos-predictions-'+horizon+'m.csv',csv(forecastExportRows(history,mrr,rates,horizon)))
+    }));
   const cfilt=D.cs.filter(c=>(c.name+c.ind+c.contact+c.own).toLowerCase().includes(q.toLowerCase())&&(rf==='all'||(rf==='active'?c.ch==null:rf==='churned'?c.ch!=null:c.ch==null&&c.health<50)));
   pgs.crm=()=>h('div',{className:'pg space-y-4'},H1('Customers',[h('label',{key:'l',htmlFor:'cq',className:'sr-only'},'Search customers'),h('input',{key:'i',id:'cq',value:q,onChange:e=>setQ(e.target.value),placeholder:'Search accounts, contacts, owners',className:'w-64'}),...[['all','All'],['active','Active'],['risk','At risk'],['churned','Churned']].map(f=>h('button',{key:f[0],className:'chip','aria-pressed':rf===f[0],onClick:()=>setRf(f[0])},f[1])),bt('Add account',()=>setFm('cust'),'g'),bt('Export CSV',expCust,'g')]),KS([['Accounts',D.cs.length,K2.act.length+' active'],['Average health',Math.round(sum(K2.act,c=>c.health)/(K2.act.length||1)),K2.risk.length+' at risk',K2.risk.length>0],['Average MRR',$k(K2.arpa),'Per active account'],['Largest account',([...K2.act].sort((a,b)=>b.mrr-a.mrr)[0]||{}).name||'n/a',$k(([...K2.act].sort((a,b)=>b.mrr-a.mrr)[0]||{}).mrr||0)]]),
     h('div',{className:'gl overflow-x-auto'},h('table',{className:'w-full min-w-[820px]'},th(['Account','Plan','MRR','Health','Owner','Region','Status']),h('tbody',null,cfilt.length?cfilt.map(c=>h('tr',{key:c.id,className:'tr border-b hair cursor-pointer',tabIndex:0,onClick:()=>setCid(c.id),onKeyDown:e=>{if(e.key==='Enter')setCid(c.id)}},h('td',{className:'px-4 py-3.5'},h('div',{className:'font-medium'},c.name),h('div',{className:'mut text-xs'},c.contact+' · '+c.ind)),h('td',{className:'px-4'},PL[c.plan][0]),h('td',{className:'px-4 tn'},$(c.mrr)),h('td',{className:'px-4 w-40'},h('div',{className:'flex items-center gap-2'},h('div',{className:'flex-1'},h(Bar,{v:c.health,mx:100,c:hc(c.health)})),h('span',{className:'tn text-xs mut w-6'},c.health))),h('td',{className:'px-4 mut'},c.own),h('td',{className:'px-4 mut'},c.reg),h('td',{className:'px-4 '+(c.ch!=null?'mut':'')},c.ch!=null?'Churned':c.health<50?'At risk':'Active'))):h('tr',null,h('td',{colSpan:7,className:'py-16 text-center mut'},'No accounts match. Clear the search or filter.'))))));

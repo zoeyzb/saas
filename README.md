@@ -65,3 +65,20 @@ All interactions remain browser-local; external integration actions are
 simulated rather than connected to third-party services.
 
 See `docs/UX_REDESIGN_SPEC.md` for design decisions and acceptance criteria.
+
+## Prediction Studio (illustrative)
+Open **Revenue → Predictions** or **Command Center → Open Predictions**.
+It uses your local recurring-revenue record history and the three editable
+monthly assumptions (new bookings, expansion and churn). The 6-, 12- and
+24-month Bear/Base/Bull projections are deterministic compounding scenarios,
+not fitted forecasts or statistical confidence intervals.
+
+- Change a slider to update your saved Base case and all three scenario paths.
+- Toggle scenario and horizon to inspect the projected MRR, ARR, change and range.
+- Review downside/upside sensitivity; export actuals, scenario projections
+  and the exact scenario rates as a real CSV.
+- The comparison never changes customer subscriptions or transactions.
+  The simulation does not connect to Stripe or a forecasting API.
+
+Financial Intelligence adds category filters and a link to Predictions. The
+Command Center retains its 3D chart with slimmer matte financial bars.

@@ -15,7 +15,7 @@ global.React={createElement:(t,p,...c)=>({t,p:p||{},c:c.flat(Infinity).filter(x=
   useRef(v){const s=cur.inst,i=cur.i++;if(!(i in s.slots))s.slots[i]={current:v===undefined?null:v};return s.slots[i]},
   useEffect(){},useId(){return'u'+(cur.i++)},useMemo:f=>f()};
 global.ReactDOM={createRoot:()=>({render:el=>roots.push(el)})};
-src+=';globalThis.__x={load,calc,mrrAt,MO,FLAT,PAGES,sum}';
+src+=';globalThis.__x={load,calc,mrrAt,MO,FLAT,PAGES,sum,forecastModel,forecastCases,forecastRates,forecastNet,forecastExportRows}';
 (0,eval)(src);
 const X=global.__x,AppF=roots[0].t;
 function expand(n,p){if(n==null||n===false||typeof n==='string'||typeof n==='number')return n;if(Array.isArray(n))return n.map((x,i)=>expand(x,p+'/'+i));
@@ -30,7 +30,7 @@ const D=()=>store.root.slots[0].v,K=()=>X.calc(D()),wait=ms=>new Promise(r=>setT
 let fails=0,passes=0;const ok=(c,m)=>{if(c){passes++}else{fails++;console.log('FAIL:',m)}};
 const click=(tree,label,i=0)=>{const b=btn(tree,label)[i];if(!b)throw new Error('no button '+label);b.p.onClick({});return render()};
 const goPage=(tree,label)=>{
-  const aliases={'Command Center':'cc','Revenue':'rev','Customers':'crm','Intelligence':'ins','Operations':'auto','Settings':'st','CRM':'crm'};
+  const aliases={'Command Center':'cc','Revenue':'rev','Customers':'crm','Intelligence':'ins','Operations':'auto','Settings':'st','CRM':'crm','Forecasting':'fc'};
   const target=aliases[label]||X.FLAT.find(p=>p[1]===label)?.[0],group=X.PAGES.find(g=>g[1].some(p=>p[0]===target));
   if(!target||!group)throw new Error('unknown destination '+label);
   const primary=find(tree,n=>n.t==='button'&&n.p.title===group[0])[0];
@@ -48,6 +48,38 @@ const submit=(tree,vals)=>{const f=find(tree,n=>n.t==='form'&&n.p.role==='dialog
   let tree=render();ok(D().nav==='cc'&&txt(tree).includes('Command Center'),'starts on Command Center');
   // 1. every page renders via the six primary destinations and contextual tabs
   for(const[k,l]of X.FLAT){tree=goPage(tree,l);ok(D().nav===k&&txt(tree).length>150,'page '+l)}
+  // 1b. deterministic prediction model: independently inspect lengths and scenario ordering.
+  for(const months of [6,12,24]){
+    const base=X.forecastModel(10000,{g:4,c:1.8,e:1.2},months);
+    ok(base.length===months+1,'model emits '+months+' months plus today');
+    ok(base[0]===10000,'model starts at current recurring revenue');
+    ok(base[months]>base[0],'positive growth compounds over '+months+' months');
+    const downside=X.forecastModel(10000,X.forecastCases({g:4,c:1.8,e:1.2}).Bear,months);
+    const upside=X.forecastModel(10000,X.forecastCases({g:4,c:1.8,e:1.2}).Bull,months);
+    ok(downside[months]<base[months]&&upside[months]>base[months],'bear/base/bull ordering over '+months+' months');
+  }
+  ok(X.forecastModel(0,{g:5,c:1,e:2},24).every(v=>v===0),'zero starting MRR remains zero');
+  ok(X.forecastModel(100,{g:0,c:8,e:0},12)[12]<100,'negative net growth decreases MRR');
+  ok(X.forecastModel(100,{g:'junk',c:100,e:-1},6).every(Number.isFinite),'malformed assumptions stay finite');
+  ok(Math.abs(X.forecastModel(10000,{g:4,c:1.8,e:1.2},12)[12]-10000*Math.pow(1.034,12))<1,'model matches independent compound-interest calculation');
+  ok(X.forecastNet({g:4,c:1.8,e:1.2})===3.4000000000000004||Math.abs(X.forecastNet({g:4,c:1.8,e:1.2})-3.4)<1e-9,'net growth is new plus expansion less churn');
+  const exported=X.forecastExportRows([100,101,102],102,{g:3,c:1,e:1},6);
+  ok(exported[0].join('|')==='Month|Data type|Historical MRR|Bear MRR|Base MRR|Bull MRR','export declares unambiguous CSV columns');
+  ok(exported.filter(row=>row[1]==='Illustrative projection').length===6,'export contains selected future horizon');
+  ok(exported.filter(row=>row[1]==='Actual').length===3,'export retains historical rows');
+  const currentMonth=new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');
+  const nextMonth=new Date(new Date().getFullYear(),new Date().getMonth()+1,1);
+  const nextMonthStamp=nextMonth.getFullYear()+'-'+String(nextMonth.getMonth()+1).padStart(2,'0');
+  ok(exported.filter(row=>row[1]==='Actual').at(-1)[0]===currentMonth,'export uses local reporting calendar for current month');
+  ok(exported.find(row=>row[1]==='Illustrative projection')[0]===nextMonthStamp,'future export starts next month, not prior UTC date');
+
+  ok(exported.some(row=>row[0]==='Method'&&row[1].includes('illustrative')),'export discloses method and limitations');
+  ok(exported.find(row=>row[0]==='Base')[5]===3,'export rounds the monthly net growth rate to readable precision');
+
+
+  tree=goPage(tree,'Command Center');
+  const pred=btn(tree,'Open Predictions ↗')[0];ok(!!pred,'Command Center provides prominent Predictions shortcut');
+  pred.p.onClick({});tree=render();ok(D().nav==='fc','shortcut opens Predictions');
   // 2. sidebar: only six primary destinations, collapse/expand, contextual Revenue tabs
   tree=goPage(tree,'Command Center');
   ok(find(tree,n=>n.t==='button'&&typeof n.p.className==='string'&&n.p.className.includes('nav-primary')).length===6,'six primary destinations');

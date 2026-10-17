@@ -193,3 +193,103 @@ select option{background:#111;color:#f6efe2}input:focus,textarea:focus,select:fo
 .settings-choice-row{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:22px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
 .settings-choice-row:last-child{border-bottom:0}
 @media(max-width:680px){.settings-surface{padding:19px}.settings-choice-row{align-items:flex-start;flex-direction:column}}
+
+/* Prediction Studio — quiet finance UI with explicit model provenance. */
+:root{--forecast-zone:rgba(243,238,227,.025)}
+:root[data-theme="light"]{--forecast-zone:rgba(12,10,9,.045)}
+@media(prefers-color-scheme:light){
+  :root:not([data-theme]){--forecast-zone:rgba(12,10,9,.045)}
+}
+.forecast-link{font-size:12px;font-weight:600;cursor:pointer;color:var(--fg);padding:7px 11px;border-radius:9px;border:1px solid var(--line);background:var(--hv);white-space:nowrap}
+.forecast-link:hover{border-color:var(--revenue);background:rgba(217,181,154,.11)}
+.forecast-toolbar{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;padding:11px 0 13px}
+.forecast-eyebrow{font-size:10px;font-weight:600;letter-spacing:.15em;color:var(--revenue)}
+.forecast-toolbar-title{font-family:'Instrument Serif',Georgia,serif;font-size:30px;font-weight:400;line-height:1.16;margin-top:7px;letter-spacing:-.025em}
+.forecast-horizon{display:inline-flex;align-items:center;gap:4px;padding:4px;background:var(--gl);border:1px solid var(--line);border-radius:12px}
+.forecast-horizon-button{border:0;background:transparent;border-radius:8px;padding:8px 14px;min-height:35px;font-size:12px;font-weight:500;color:var(--mut);cursor:pointer;white-space:nowrap}
+.forecast-horizon-button[aria-pressed=true]{color:var(--bg);background:var(--fg)}
+.forecast-horizon-button:not([aria-pressed=true]):hover{background:var(--hv);color:var(--fg)}
+.forecast-kpi{padding:20px 19px 18px;border:1px solid var(--line);border-radius:16px;background:var(--gl);display:flex;flex-direction:column;gap:10px;min-width:0}
+.forecast-kpi-value{font-size:clamp(22px,2.1vw,31px);line-height:1;font-weight:600;letter-spacing:-.035em;white-space:nowrap}
+.forecast-main-grid{display:grid;grid-template-columns:minmax(0,1.95fr) minmax(285px,.85fr);gap:14px;align-items:start}
+.forecast-graph-card{padding:23px 24px 19px;min-width:0}
+.forecast-graph-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.forecast-preset-controls{display:flex;gap:5px;flex-wrap:wrap}
+.forecast-scenario-button{border-radius:99px;border:1px solid var(--line);background:transparent;color:var(--mut);padding:7px 13px;min-height:34px;cursor:pointer;font-size:12px}
+.forecast-scenario-button:hover{color:var(--fg);border-color:var(--mut)}
+.forecast-scenario-button[aria-pressed=true]{background:var(--fg);border-color:var(--fg);color:var(--bg)}
+.forecast-visual{width:100%;margin-top:15px;min-width:0}
+.forecast-visual-meta{display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-size:11px;color:var(--mut);margin:5px 0 8px}
+.forecast-visual-meta span{display:flex;align-items:center;gap:5px;white-space:nowrap}
+.forecast-key{height:3px;width:14px;display:inline-block;border-radius:99px}
+.historical-key{background:var(--fg)}
+.forecast-meta-selected{color:var(--fg)}
+.forecast-hover-meta{margin-left:auto;min-width:175px;justify-content:flex-end;font-variant-numeric:tabular-nums;color:var(--fg)}
+.forecast-svg{display:block;width:100%;height:auto;overflow:visible;touch-action:pan-y;max-height:355px}
+.forecast-caption{font-size:11px;color:var(--mut);line-height:1.6;margin:3px 0 0}
+.forecast-graph-footer{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;border-top:1px solid var(--line);margin-top:15px;padding-top:18px}
+.forecast-graph-footer>div{display:flex;flex-direction:column;gap:7px;min-width:0}
+.forecast-graph-footer strong{font-size:16px;font-weight:600;white-space:nowrap}
+.forecast-assumptions{padding:23px}
+.forecast-setting{margin-top:21px}
+.forecast-label{font-size:13px;font-weight:500}
+.forecast-slider{appearance:auto;accent-color:#d9b59a;height:7px!important;margin:15px 0 10px!important;padding:0!important;border:0!important;border-radius:99px;cursor:pointer}
+.forecast-net{display:flex;gap:12px;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding-top:19px;margin-top:22px}
+.forecast-net strong{font-size:18px;font-weight:600}
+.forecast-comparison-card{padding:24px}
+.forecast-cases{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:22px}
+.forecast-case{text-align:left;background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:14px;padding:17px;cursor:pointer;min-width:0;display:flex;flex-direction:column;gap:10px}
+.forecast-case:hover{background:var(--hv)}
+.forecast-case-active{background:var(--hv);border-color:rgba(217,181,154,.7)}
+.forecast-case-name{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
+.forecast-case-dot{width:8px;height:8px;display:inline-block;border-radius:50%}
+.forecast-case-value{font-size:clamp(22px,2vw,30px);font-weight:600;line-height:1.1;letter-spacing:-.035em}
+.forecast-sensitivity{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:20px 23px;border:1px solid var(--line);border-radius:16px;flex-wrap:wrap}
+.forecast-sensitivity-pills{display:flex;gap:24px;flex-wrap:wrap}
+.forecast-sensitivity-pills>div{display:flex;flex-direction:column;gap:5px}
+.forecast-sensitivity-pills strong{font-weight:600;font-size:17px}
+@media(max-width:1090px){
+  .forecast-main-grid{grid-template-columns:1fr}
+}
+@media(max-width:780px){
+  .forecast-graph-card,.forecast-assumptions,.forecast-comparison-card{padding:18px}
+  .forecast-cases{gap:8px}
+  .forecast-case{padding:13px}
+  .forecast-graph-footer{gap:10px}
+}
+@media(max-width:600px){
+  .forecast-toolbar{gap:14px;padding-top:5px}
+  .forecast-toolbar-title{font-size:27px}
+  .forecast-kpi{padding:17px 13px;gap:9px}
+  .forecast-kpi-value{font-size:24px}
+  .forecast-graph-heading{gap:14px}
+  .forecast-visual-meta{gap:8px;font-size:10px}
+  .forecast-hover-meta{flex-basis:100%;margin-left:0;justify-content:flex-start}
+  .forecast-cases{grid-template-columns:1fr}
+  .forecast-graph-footer{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .forecast-graph-footer strong{font-size:15px}
+  .forecast-sensitivity{padding:17px}
+  .forecast-horizon{width:100%;justify-content:space-between}
+  .forecast-horizon-button{flex:1}
+}
+
+/* Intelligence: filter the worklist without adding another crowded sidebar. */
+.signal-filters{display:flex;gap:7px;flex-wrap:wrap;margin-top:2px}
+.signal-filter{border-radius:99px;border:1px solid var(--line);background:transparent;color:var(--mut);padding:7px 12px;min-height:34px;font-size:12px;cursor:pointer}
+.signal-filter:hover{color:var(--fg);border-color:var(--mut)}
+.signal-filter[aria-pressed=true]{background:var(--fg);border-color:var(--fg);color:var(--bg)}
+.signal-empty{padding:25px}
+@media(max-width:680px){
+  .signal-filters{gap:6px}
+  .signal-filter{font-size:11px;padding:7px 10px}
+}
+
+/* Keep chart numerals readable instead of shrinking 24 projected months on phones. */
+.forecast-graph-scroller{overflow:visible;scrollbar-width:thin}
+.forecast-scroll-hint{display:none;font-size:11px;color:var(--mut);margin:6px 0}
+@media(max-width:1000px){
+  .forecast-graph-scroller{overflow-x:auto;overflow-y:hidden;max-width:100%;overscroll-behavior-x:contain;border-radius:8px}
+  .forecast-graph-scroller .forecast-svg{min-width:650px;max-height:none}
+  .forecast-svg text{font-size:15px}
+  .forecast-scroll-hint{display:block}
+}
