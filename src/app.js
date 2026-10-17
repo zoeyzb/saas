@@ -47,13 +47,13 @@ const insights=(D,K)=>{const o=[],r=K.risk,rs=sum(r,c=>c.mrr);
   if(K.gm<.75)o.push({id:'gm',t:'Gross margin is '+pc(K.gm*100),w:'Infrastructure and support costs take '+pc((1-K.gm)*100)+' of this month\'s revenue.',a:'See profitability',to:'pf'});
   return o};
 /* ---------- charts ---------- */
-function Lines({S,L,f=$k,H=230}){const[hi,setHi]=useState(null),id=useId().replace(/:/g,''),W=640,P=46,n=L.length,all=S.flatMap(s=>s.d.filter(v=>v!=null)),mn=Math.min(0,...all),mx=Math.max(...all)*1.08||1,X=i=>P+i/(n-1)*(W-P-10),Y=v=>H-24-(v-mn)/(mx-mn||1)*(H-44);
+function Lines({S,L,f=$k,H=230,W=640}){const[hi,setHi]=useState(null),id=useId().replace(/:/g,''),P=46,n=L.length,all=S.flatMap(s=>s.d.filter(v=>v!=null)),mn=Math.min(0,...all),mx=Math.max(...all)*1.08||1,X=i=>P+i/(n-1)*(W-P-10),Y=v=>H-24-(v-mn)/(mx-mn||1)*(H-44);
   const tt=hi!=null?L[hi]+'   '+S.map(s=>s.d[hi]!=null?s.n+' '+f(s.d[hi]):'').filter(Boolean).join('   '):'';
   return h('svg',{viewBox:'0 0 '+W+' '+H,className:'w-full',role:'img','aria-label':'Chart',onMouseMove:e=>{const b=e.currentTarget.getBoundingClientRect();setHi(Math.max(0,Math.min(n-1,Math.round(((e.clientX-b.left)/b.width*W-P)/(W-P-10)*(n-1)))))},onMouseLeave:()=>setHi(null)},
-    h('defs',null,S.map((s,si)=>h('linearGradient',{key:si,id:id+si,x1:0,y1:0,x2:0,y2:1},h('stop',{offset:0,stopColor:s.c,stopOpacity:.4}),h('stop',{offset:1,stopColor:s.c,stopOpacity:0})))),
+    h('defs',null,S.map((s,si)=>h('linearGradient',{key:si,id:id+si,x1:0,y1:0,x2:0,y2:1},h('stop',{offset:0,stopColor:s.c,stopOpacity:.16}),h('stop',{offset:1,stopColor:s.c,stopOpacity:0})))),
     [0,1,2,3].map(k=>{const v=mn+(mx-mn)*k/3;return h('g',{key:k},h('line',{x1:P,x2:W-8,y1:Y(v),y2:Y(v),stroke:'var(--line)'}),h('text',{x:P-8,y:Y(v)+4,fill:'var(--mut)',fontSize:10,textAnchor:'end'},f(v)))}),
     L.map((l,i)=>i%2===0&&h('text',{key:i,x:X(i),y:H-6,fill:'var(--mut)',fontSize:10,textAnchor:'middle'},l)),
-    S.map((s,si)=>{const pts=s.d.map((v,i)=>v==null?null:[X(i),Y(v)]).filter(Boolean),d=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join('');return h('g',{key:si},s.fill&&h('path',{d:d+'L'+pts[pts.length-1][0]+' '+(H-24)+'L'+pts[0][0]+' '+(H-24)+'Z',fill:'url(#'+id+si+')'}),h('path',{d,transform:'translate(0 6)',fill:'none',stroke:'rgba(0,0,0,.6)',strokeWidth:3,style:{filter:'blur(3px)'}}),h('path',s.dash?{d,fill:'none',stroke:s.c,strokeWidth:s.w||2,strokeDasharray:s.dash,style:{filter:'drop-shadow(0 0 5px '+s.c+')'}}:{d,fill:'none',stroke:s.c,strokeWidth:s.w||2,pathLength:1,className:'draw',style:{filter:'drop-shadow(0 0 6px '+s.c+')'}}))}),
+    S.map((s,si)=>{const pts=s.d.map((v,i)=>v==null?null:[X(i),Y(v)]).filter(Boolean),d=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join('');return h('g',{key:si},s.fill&&h('path',{d:d+'L'+pts[pts.length-1][0]+' '+(H-24)+'L'+pts[0][0]+' '+(H-24)+'Z',fill:'url(#'+id+si+')'}),h('path',{d,transform:'translate(0 6)',fill:'none',stroke:'rgba(0,0,0,.6)',strokeWidth:3,style:{filter:'blur(3px)'}}),h('path',s.dash?{d,fill:'none',stroke:s.c,strokeWidth:s.w||2,strokeDasharray:s.dash,style:{filter:'drop-shadow(0 0 5px '+s.c+')'}}:{d,fill:'none',stroke:s.c,strokeWidth:s.w||2,pathLength:1,className:'draw',style:{filter:'drop-shadow(0 0 2px '+s.c+')'}}))}),
     hi!=null&&h('g',null,h('line',{x1:X(hi),x2:X(hi),y1:28,y2:H-24,stroke:'var(--mut)',strokeDasharray:'3 3'}),S.map((s,si)=>s.d[hi]!=null&&h('circle',{key:si,cx:X(hi),cy:Y(s.d[hi]),r:4.5,fill:'var(--bg)',stroke:s.c,strokeWidth:2})),h('rect',{x:Math.max(P,Math.min(X(hi)-8,W-tt.length*6.2-24)),y:3,width:tt.length*6.2+16,height:22,rx:7,fill:'rgba(0,0,0,.78)',stroke:'var(--line)'}),h('text',{x:Math.max(P,Math.min(X(hi)-8,W-tt.length*6.2-24))+8,y:18,fill:'#f6efe2',fontSize:12,fontWeight:600},tt)))}
 function Bars({d,L,H=200}){const[hi,setHi]=useState(null),W=640,mx=Math.max(...d.map(Math.abs),1),z=H-24-(H-44)*(Math.max(...d,0)/(Math.max(...d,0)+Math.abs(Math.min(...d,0))||1)),bw=(W-50)/d.length;
   return h('svg',{viewBox:'0 0 '+W+' '+H,className:'w-full',role:'img','aria-label':'Profit by month'},h('line',{x1:40,x2:W,y1:z,y2:z,stroke:'var(--line)'}),d.map((v,i)=>{const k=Math.abs(v)/mx*(H-60);return h('g',{key:i,onMouseEnter:()=>setHi(i),onMouseLeave:()=>setHi(null)},h('rect',{x:44+i*bw+4,y:v>=0?z-k:z,width:bw-8,height:Math.max(k,1),rx:3,fill:v>=0?'var(--fg)':'#ff6a5c',opacity:hi===i?1:.78}),h('text',{x:44+i*bw+bw/2,y:H-6,fill:'var(--mut)',fontSize:10,textAnchor:'middle'},L[i]),hi===i&&h('text',{x:44+i*bw+bw/2,y:(v>=0?z-k:z+k)+(v>=0?-6:14),fill:'var(--fg)',fontSize:11,textAnchor:'middle',fontWeight:600},$k(v)))}))}
@@ -89,7 +89,10 @@ function Skyline({rp,ex,pr,fc,L,mode,onBar,q}){
     const dyn=new THREE.Group();root.add(dyn);
     const R=sceneRef.current;R.dyn=dyn;R.bars=[];R.groups=[];R.mode=mode;R.t0=0;
     const disposeTree=g=>{g.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){const mm=Array.isArray(o.material)?o.material:[o.material];mm.forEach(m=>m.dispose());}});while(g.children.length)g.remove(g.children[0]);};
-    const material=(color,emissive=0x070707)=>new THREE.MeshStandardMaterial({color,metalness:.28,roughness:.31,emissive,emissiveIntensity:.035});
+    const material=color=>{
+      const tone=new THREE.Color(color),side=tone.clone().multiplyScalar(.72),back=tone.clone().multiplyScalar(.58),top=tone.clone().multiplyScalar(1.06);
+      return [side,side,tone.clone(),back,tone.clone(),side].map(c=>new THREE.MeshBasicMaterial({color:c,toneMapped:false}));
+    };
     const bar=(w,h,color)=>{const g=new THREE.BoxGeometry(w,Math.max(.018,h),.36);g.translate(0,Math.max(.018,h)/2,0);return new THREE.Mesh(g,material(color));};
     const edge=(mesh,color,opacity=.35)=>{const e=new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry),new THREE.LineBasicMaterial({color,transparent:true,opacity,depthWrite:false}));mesh.add(e);};
     const top=(g,y,color,w=.5)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,.028,.38),new THREE.MeshBasicMaterial({color}));m.position.y=y;g.add(m);};
@@ -99,7 +102,7 @@ function Skyline({rp,ex,pr,fc,L,mode,onBar,q}){
       const count=mode==='profit'?12:12+fc.length,pitch=.84,x0=-(count-1)*pitch/2;
       const maxi=Math.max(1,...totals,...ex,...fc),profitMax=Math.max(1,...pr.map(Math.abs));
       const unit=3.72/maxi,profitUnit=1.8/profitMax;
-      const shades=[0x776353,0x9d806b,0xc4a287,0xebd3b9];
+      const shades=[0x6d6a63,0x8f8b82,0xd9b59a,0xf3eee3];
       for(let i=0;i<count;i++){
         const predicted=i>=12,x=x0+i*pitch;
         const group=new THREE.Group();group.position.x=x;group.userData.delay=i*.032;
@@ -112,9 +115,9 @@ function Skyline({rp,ex,pr,fc,L,mode,onBar,q}){
           edge(mesh,v>=0?0xc2d0be:0xff8990,.32);add(mesh);
           top(group,v>=0?height:-height,v>=0?0xb5cdb0:0xff898f,.41);
         }else if(predicted){
-          const height=Math.max(.025,fc[i-12]*unit),mesh=bar(.4,height,0x74858a);
-          edge(mesh,0xb9c4c5,.66);add(mesh);
-          top(group,height,0xc4cbcb,.41);
+          const height=Math.max(.025,fc[i-12]*unit),mesh=bar(.4,height,0x8f8b82);
+          edge(mesh,0xe2d9cc,.38);add(mesh);
+          top(group,height,0xb7aea3,.41);
         }else if(mode==='vs'){
           const values=[totals[i],ex[i]],colors=[0xd9b59a,0xe5484d];
           values.forEach((v,idx)=>{
@@ -167,7 +170,7 @@ function Skyline({rp,ex,pr,fc,L,mode,onBar,q}){
       raf=requestAnimationFrame(loop);if(!visible||t-last<33)return;last=t;
       root.rotation.y=rotation;
       if(!reduceM)R.groups.forEach(g=>{const p=Math.max(0,Math.min(1,(t-R.t0-g.userData.delay*1000)/650));g.scale.y=Math.max(.001,1-Math.pow(1-p,3));});
-      for(const mesh of R.bars){mesh.material.emissiveIntensity=mesh.userData.m===hover?.24:.055;}
+      for(const mesh of R.bars){mesh.scale.z=mesh.userData.m===hover?1.15:1;}
       renderer.render(sc,cam);
     };
     raf=requestAnimationFrame(loop);
@@ -299,8 +302,8 @@ function App(){
   /* shared UI */
   const bt=(l,f,c)=>h('button',{className:'btn '+(c||''),onClick:f},l),dot=c=>h('span',{className:'inline-block w-2 h-2 rounded-full mr-2',style:{background:c}});
   const th=a=>h('thead',null,h('tr',{className:'border-b hair'},a.map(x=>h('th',{key:x,className:'text-left font-medium mut px-4 py-3 whitespace-nowrap'},x)))),H1=(t,ch)=>h('div',{className:'flex items-center gap-3 flex-wrap'},h('h1',{className:'text-xl font-semibold tracking-tight mr-auto'},t),ch);
-  const hc=v=>v<50?'#ff6a5c':v<70?'#ffc7a6':'#b8e0a6';
-  const Kpi=(l,v,s,red)=>h('div',{key:l,className:'p-5'},h('div',{className:'mut text-xs'},l),h('div',{className:'serif text-4xl leading-none mt-2 tn '+(red?'red':'')},v),h('div',{className:'mut text-xs mt-2'},s));
+  const hc=v=>v<50?'#e5484d':v<70?'#d9b59a':'#8fae8b';
+  const Kpi=(l,v,s,red)=>h('div',{key:l,className:'p-5'},h('div',{className:'mut text-xs'},l),h('div',{className:'text-2xl font-semibold leading-none mt-2 tn '+(red?'red':'')},v),h('div',{className:'mut text-xs mt-2'},s));
   const dMoM=(a,b)=>b?((a-b)/b*100):0,mm=K2.mrrS,dl=(a,b)=>{const x=dMoM(a,b);return (x>=0?'+':'')+x.toFixed(1)+'% vs last month'};
   const apply=i=>{if(i.id==='risk'){K2.risk.forEach(c=>rescue(c.id));flash('Success calls logged for '+K2.risk.length+' at-risk accounts')}else if(i.id==='exp'){const top=K2.act.filter(c=>c.health>=80&&c.plan<3).sort((a,b)=>b.health-a.health).slice(0,3);top.forEach(c=>setPlan(c.id,c.plan+1));flash('Moved '+top.length+' accounts up one tier')}};
   const insRow=i=>h('div',{key:i.id,className:'py-3 border-t hair first:border-0'},h('div',{className:'font-medium'},i.t),h('div',{className:'mut text-[13px] mt-0.5 max-w-[62ch]'},i.w),h('div',{className:'flex gap-3 mt-2 flex-wrap items-center'},(i.id==='risk'||i.id==='exp')&&h('button',{className:'btn !min-h-[30px] !py-1 text-xs',onClick:()=>apply(i)},i.id==='risk'?'Log calls for all':'Upgrade top 3'),h('button',{className:'underline underline-offset-4 cursor-pointer text-[13px] mut hover:text-[var(--fg)]',onClick:()=>go(i.to)},i.a)));
@@ -316,30 +319,47 @@ function App(){
     const rk=[...K2.risk].sort((a,b)=>b.mrr-a.mrr).slice(0,5),last=c=>c.notes.length?Math.round((Date.now()-c.notes[0].ts)/864e5)+'d ago':'no contact logged',proj=Array.from({length:13},(_,k)=>K2.mrr*Math.pow(1+(D.as.g-D.as.c+D.as.e)/100,k));
     return h('div',{className:'pg space-y-3'},
       h('div',{className:'flex items-center gap-3 flex-wrap'},h('h1',{className:'text-xl font-semibold tracking-tight mr-auto'},'Command Center'),h('span',{className:'mut text-xs'},D.ws.name+' · '+NOW.toLocaleDateString([],{month:'long',year:'numeric'}))),
-      h('div',{className:'gl relative overflow-hidden',style:{height:'clamp(360px,47vh,440px)'}},
+      h('div',{className:'gl relative overflow-hidden',style:{height:'clamp(322px,41vh,394px)'}},
         h(Skyline,{rp,ex:K2.exp,pr:K2.prof,fc:fcv,L:L18,mode:hmode,q:qual,onBar:(m,f)=>{if(f)go('fc');else{setMo(String(m));setTf('all');setQ('');go('tx')}}}),
         h('div',{className:'absolute inset-x-0 top-0 h-px pointer-events-none',style:{background:'linear-gradient(90deg,transparent,rgba(243,238,227,.32),rgba(243,238,227,.12),transparent)',backgroundSize:'200% 100%',animation:'shift 6s linear infinite'}}),h('div',{className:'skyline-header absolute left-5 top-4 pointer-events-none'},h('div',{className:'mut text-xs'},'Revenue, last 12 months'),h('div',{className:'text-4xl font-semibold tn tracking-tight mt-1'},$k(rev12)),h('div',{className:'flex gap-4 mt-2 text-[13px]'},h('span',null,h('span',{className:'mut'},'Expenses '),$k(exp12)),h('span',null,h('span',{className:'mut'},'Profit '),h('span',{className:K2.prof.reduce((a,b)=>a+b,0)<0?'red':''},$k(sum(K2.prof)))),h('span',null,h('span',{className:'mut'},'MRR '),$k(K2.mrr)))),
         h('div',{className:'skyline-controls absolute right-4 top-4 flex gap-1.5 flex-wrap justify-end'},[['plan','Revenue by plan'],['vs','Revenue vs expenses'],['profit','Profit']].map(x=>h('button',{key:x[0],className:'chip !py-1 !px-3 text-xs','aria-pressed':hmode===x[0],onClick:()=>setHmode(x[0])},x[1]))),
-        h('div',{className:'absolute left-5 bottom-3 mut text-[11px] pointer-events-none max-w-[640px]'},'Hover to explore · Click a month to open transactions · Drag gently to adjust the view')),
+        h('div',{className:'skyline-help absolute left-5 bottom-3 mut text-[11px] pointer-events-none max-w-[640px]'},'Select a month for transactions · Drag to rotate')),
       h('div',{className:'grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3'},Kc('MRR',K2.mrr,$k,'since '+MO[5],mm,false,g6),Kc('ARR',K2.arr,$k,K2.act.length+' subscriptions',mm.map(v=>v*12)),Kc('Revenue, month',K2.rev[11],$k,'vs '+MO[10],K2.rev,false,dMoM(K2.rev[11],K2.rev[10])),Kc('Net profit',K2.prof[11],$k,'Margin '+pc(K2.rev[11]?K2.prof[11]/K2.rev[11]*100:0),K2.prof,K2.prof[11]<0),Kc('Cash',K2.cash,$k,runway,cashS),Kc('At-risk MRR',sum(K2.risk,c=>c.mrr),$k,K2.risk.length+' accounts under 50',null,K2.risk.length>0)),
-      h('div',{className:'grid lg:grid-cols-3 gap-3 items-stretch'},
+      h('div',{className:'grid lg:grid-cols-3 gap-3 dashboard-compact'},
         Card('MRR bridge',MO[a5]+' to '+MO[11],h(Wf,{S:bridge})),
-        Card('Cash balance',$k(K2.cash)+' · '+runway,h(Lines,{S:[{n:'Cash',d:cashS,c:'var(--fg)',fill:1}],L:MO,H:200})),
-        Card('Sales funnel',D.ds.filter(d=>d.stage<4).length+' open deals · '+$k(K2.wp)+' weighted',h('div',null,fun.map((f,i)=>h('div',{key:f.n,className:'py-1.5'},h('div',{className:'flex justify-between text-[13px] mb-1'},h('span',null,f.n),h('span',{className:'mut tn'},f.c+' · '+$k(f.v)+(i?' · '+Math.round(f.c/(fun[i-1].c||1)*100)+'%':''))),h(Bar,{v:f.c,mx:fun[0].c,c:i===4?'#8fae8b':'var(--revenue)'})))),bt('Open pipeline',()=>go('pl'),'g'))),
-      h('div',{className:'grid lg:grid-cols-3 gap-3 items-stretch'},
+        Card('Cash balance',$k(K2.cash)+' · '+runway,h(Lines,{S:[{n:'Cash',d:cashS,c:'var(--fg)',fill:1}],L:MO,H:200,W:410})),
+        Card('Sales funnel',D.ds.filter(d=>d.stage<4).length+' open deals · '+$k(K2.wp)+' weighted',h('div',null,fun.map((f,i)=>h('div',{key:f.n,className:'py-1.5'},h('div',{className:'flex justify-between text-[13px] mb-1'},h('span',null,f.n),h('span',{className:'mut tn'},f.c+' · '+$k(f.v)+(i?' · '+Math.round(f.c/(fun[i-1].c||1)*100)+'%':''))),h(Bar,{v:f.c,mx:fun[0].c,c:i===4?'var(--positive)':'var(--revenue)'})))),bt('Open pipeline',()=>go('pl'),'g'))),
+      h('div',{className:'grid lg:grid-cols-2 gap-3 dashboard-compact'},
         Card('Customer segments','Active MRR by plan',h('div',null,seg.map(s=>h('div',{key:s.n,className:'py-1.5'},h('div',{className:'flex justify-between text-[13px] mb-1'},h('span',null,s.n+' · '+s.c),h('span',{className:'mut tn'},$k(s.v)+' · '+Math.round(s.v/(K2.mrr||1)*100)+'%')),h(Bar,{v:s.v,mx:mxs}))))),
-        Card('Risk intelligence',K2.risk.length+' accounts below 50 health',rk.length?h('div',null,rk.map(c=>h('div',{key:c.id,className:'flex items-center gap-2 py-2 border-t hair first:border-0'},h('div',{className:'flex-1 min-w-0'},h('button',{className:'font-medium cursor-pointer text-left truncate max-w-full',onClick:()=>setCid(c.id)},c.name),h('div',{className:'mut text-xs'},$(c.mrr)+' MRR · health '+c.health+' · '+last(c))),bt('Log call',()=>rescue(c.id),'g')))):h('div',{className:'mut py-6 text-center'},'No accounts at risk.')),
-        Card('Recommended actions','Computed from your records',h('div',null,ins.slice(0,4).map(insRow)))),
-      h('div',{className:'grid lg:grid-cols-3 gap-3 items-stretch'},
-        Card('Forecast','Base case, next 12 months · '+$k(proj[12])+' MRR',h(Lines,{S:[{n:'MRR',d:[...mm,...Array(12).fill(null)],c:'var(--fg)',fill:1},{n:'Projected',d:[...Array(11).fill(null),K2.mrr,...proj.slice(1)],c:'#ff6a5c',dash:'5 4'}],L:[...MO,...Array(12).fill('')],H:190}),bt('Edit assumptions',()=>go('fc'),'g')),
+        Card('Risk intelligence',K2.risk.length+' accounts below 50 health',h('div',null,
+          h('div',{className:'flex justify-between items-end gap-4 pb-3'},h('div',null,h('div',{className:'mut text-xs'},'Revenue exposed'),h('div',{className:'text-2xl font-semibold red mt-1'},$k(sum(K2.risk,c=>c.mrr)))),h('div',{className:'text-right'},h('div',{className:'mut text-xs'},'Share of MRR'),h('div',{className:'font-medium'},pc(100*sum(K2.risk,c=>c.mrr)/(K2.mrr||1))))),
+          h(Bar,{v:sum(K2.risk,c=>c.mrr),mx:K2.mrr,c:'var(--red)'}),
+          rk.length?rk.map(c=>h('div',{key:c.id,className:'dashboard-risk flex items-center gap-3'},h('div',{className:'flex-1 min-w-0'},h('button',{className:'font-medium cursor-pointer text-left truncate max-w-full',onClick:()=>setCid(c.id)},c.name),h('div',{className:'mut text-xs mt-1'},$(c.mrr)+' MRR · health '+c.health+' · '+last(c))),bt('Log call',()=>rescue(c.id),'g'))):h('div',{className:'mut pt-4'},'No accounts at risk.'))),
+        h('div',{className:'gl p-4 lg:col-span-2'},h('div',{className:'font-semibold'},'Recommended actions'),h('div',{className:'mut text-xs mt-0.5 mb-2'},'Computed from your records'),h('div',{className:'insight-grid'},ins.slice(0,4).map(insRow)))),
+      h('div',{className:'grid lg:grid-cols-3 gap-3 dashboard-compact'},
+        Card('Forecast','Base case, next 12 months · '+$k(proj[12])+' MRR',h(Lines,{S:[{n:'MRR',d:[...mm,...Array(12).fill(null)],c:'var(--fg)',fill:1},{n:'Projected',d:[...Array(11).fill(null),K2.mrr,...proj.slice(1)],c:'var(--revenue)',dash:'5 4'}],L:[...MO,...Array(12).fill('')],H:190}),bt('Edit assumptions',()=>go('fc'),'g')),
         Card('Profit by month','Revenue after all costs',h(Bars3D,{d:K2.prof,L:MO,H:220,lab:'Profit by month'})),
-        Card('Recent activity',null,h('ul',null,D.log.slice(0,6).map((l,i)=>h('li',{key:i,className:'flex gap-3 py-2 border-t hair first:border-0 text-[13px]'},h('span',{className:'mut w-16 flex-none text-xs pt-0.5'},new Date(l.ts).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})),h('span',null,l.m)))))))};
+        Card('Recent activity',D.log.length+' recorded events',h('div',null,
+          h('ul',null,D.log.slice(0,6).map((l,i)=>h('li',{key:i,className:'flex gap-3 py-2 border-t hair first:border-0 text-[13px]'},h('span',{className:'mut w-16 flex-none text-xs pt-0.5'},new Date(l.ts).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})),h('span',null,l.m)))),
+          D.log.length<=1&&h('div',{className:'mut text-xs border-t hair pt-3 mt-2'},'Events appear here as you work with customers, deals and invoices.')))))};
   pgs.rev=()=>{const by=PL.map((p,i)=>({n:p[0],v:sum(K2.act.filter(c=>c.plan===i),c=>c.mrr)})),mx=Math.max(...by.map(x=>x.v)),rg=REG.map(r=>({n:r,v:sum(K2.act.filter(c=>c.reg===r),c=>c.mrr)})),mr=Math.max(...rg.map(x=>x.v)),ind=Object.entries(K2.act.reduce((o,c)=>({...o,[c.ind]:(o[c.ind]||0)+c.mrr}),{})).sort((a,b)=>b[1]-a[1]).slice(0,6);
     return h('div',{className:'pg space-y-4'},H1('Revenue'),h('div',{className:'gl grid grid-cols-2 lg:grid-cols-4'},Kpi('This month',$k(K2.rev[11]),dl(K2.rev[11],K2.rev[10])),Kpi('MRR',$k(K2.mrr),dl(mm[11],mm[10])),Kpi('12-month revenue',$k(sum(K2.rev)),'After '+$k(sum(K2.ref))+' refunds'),Kpi('Avg revenue per account',$k(K2.arpa),K2.act.length+' accounts')),
-      h('div',{className:'gl p-5'},h('div',{className:'serif text-2xl mb-2'},'Revenue vs MRR'),h(Lines,{S:[{n:'Collected',d:K2.rev,c:'var(--fg)',fill:1},{n:'MRR',d:K2.mrrS,c:'#ff6a5c'}],L:MO})),
-      h('div',{className:'grid lg:grid-cols-3 gap-4'},[['By plan',by],['By region',rg],['By industry',ind.map(x=>({n:x[0],v:x[1]}))]].map(g=>h('div',{key:g[0],className:'gl p-5'},h('div',{className:'serif text-2xl mb-3'},g[0]),g[1].map(x=>h('div',{key:x.n,className:'py-2'},h('div',{className:'flex justify-between text-sm mb-1'},h('span',null,x.n),h('span',{className:'mut tn'},$k(x.v)+' · '+Math.round(x.v/K2.mrr*100)+'%')),h(Bar,{v:x.v,mx:Math.max(...g[1].map(y=>y.v))})))))))};
+      h('div',{className:'grid lg:grid-cols-3 gap-3 items-start'},
+        h('div',{className:'gl p-5 lg:col-span-2'},h('div',{className:'serif text-2xl mb-1'},'Revenue vs MRR'),h('div',{className:'mut text-xs mb-3'},'Collected revenue and recurring subscriptions'),h(Lines,{S:[{n:'Collected',d:K2.rev,c:'var(--fg)',fill:1},{n:'MRR',d:K2.mrrS,c:'var(--revenue)'}],L:MO,H:228})),
+        h('div',{className:'gl p-5'},h('div',{className:'serif text-2xl mb-1'},'Revenue snapshot'),
+          h('div',{className:'mut text-xs mb-4'},'Current month · calculated from transactions'),
+          h('div',{className:'financial-snapshot'},[
+            ['Collected',K2.rev[11]],
+            ['Expenses',K2.exp[11]],
+            ['Net profit',K2.prof[11]],
+            ['MRR',K2.mrr]
+          ].map(x=>h('div',{key:x[0]},h('span',{className:'mut text-sm'},x[0]),h('span',{className:'font-semibold tn '+(x[0]==='Net profit'&&x[1]<0?'red':'')},$k(x[1])))),
+          h('div',{className:'pt-4 mt-1 border-t hair'},h('div',{className:'text-xs mut mb-1'},'Net profit margin'),
+            h(Bar,{v:Math.max(0,K2.prof[11]),mx:K2.rev[11],c:'var(--positive)'}),
+            h('div',{className:'font-semibold mt-2'},pc(K2.prof[11]/(K2.rev[11]||1)*100)))))),
+      h('div',{className:'grid lg:grid-cols-3 gap-4 items-start'},[['By plan',by],['By region',rg],['By industry',ind.map(x=>({n:x[0],v:x[1]}))]].map(g=>h('div',{key:g[0],className:'gl p-5'},h('div',{className:'serif text-2xl mb-3'},g[0]),g[1].map(x=>h('div',{key:x.n,className:'py-2'},h('div',{className:'flex justify-between text-sm mb-1'},h('span',null,x.n),h('span',{className:'mut tn'},$k(x.v)+' · '+Math.round(x.v/K2.mrr*100)+'%')),h(Bar,{v:x.v,mx:Math.max(...g[1].map(y=>y.v))})))))))};
   pgs.ins=()=>h('div',{className:'pg max-w-3xl'},H1('Insights'),h('div',{className:'mut mt-2'},'Rule-based analysis of this workspace: thresholds, variance checks and pipeline math. Every figure below is computed from your records.'),h('div',{className:'gl px-6 mt-4'},ins.map(insRow)));
-  pgs.fc=()=>{const a=D.as,net=1+(a.g-a.c+a.e)/100,proj=Array.from({length:13},(_,k)=>K2.mrr*Math.pow(net,k)),S=[{n:'MRR',d:[...K2.mrrS,...Array(12).fill(null)],c:'var(--fg)',fill:1},{n:'Projected',d:[...Array(11).fill(null),K2.mrr,...proj.slice(1)],c:'#ff6a5c',dash:'5 4'}],L2=[...MO,...Array.from({length:12},(_,i)=>new Date(NOW.getFullYear(),NOW.getMonth()+1+i,1).toLocaleString('en',{month:'short'}))],set=p=>setD(d=>({...d,as:{...d.as,...p}})),done=()=>up(d=>d,'Forecast assumptions updated');
+  pgs.fc=()=>{const a=D.as,net=1+(a.g-a.c+a.e)/100,proj=Array.from({length:13},(_,k)=>K2.mrr*Math.pow(net,k)),S=[{n:'MRR',d:[...K2.mrrS,...Array(12).fill(null)],c:'var(--fg)',fill:1},{n:'Projected',d:[...Array(11).fill(null),K2.mrr,...proj.slice(1)],c:'var(--revenue)',dash:'5 4'}],L2=[...MO,...Array.from({length:12},(_,i)=>new Date(NOW.getFullYear(),NOW.getMonth()+1+i,1).toLocaleString('en',{month:'short'}))],set=p=>setD(d=>({...d,as:{...d.as,...p}})),done=()=>up(d=>d,'Forecast assumptions updated');
     const sl=(k,l,mx)=>h('div',{key:k,className:'py-3'},h('div',{className:'flex justify-between mb-1'},h('label',{htmlFor:'s'+k},l),h('span',{className:'tn'},a[k].toFixed(1)+'% / mo')),h('input',{id:'s'+k,type:'range',min:0,max:mx,step:.1,value:a[k],className:'w-full !p-0 !border-0',onChange:e=>set({[k]:+e.target.value}),onPointerUp:done,onKeyUp:done}));
     return h('div',{className:'pg space-y-4'},H1('Forecasting',['Bear','Base','Bull'].map((n,i)=>h('button',{key:n,className:'chip',onClick:()=>{set([{g:1.5,c:3,e:.5},{g:4,c:1.8,e:1.2},{g:7,c:1.2,e:2}][i]);done()}},n))),
       h('div',{className:'grid lg:grid-cols-12 gap-4'},h('div',{className:'gl p-5 lg:col-span-8'},h('div',{className:'serif text-2xl mb-2'},'MRR trajectory'),h(Lines,{S,L:L2,H:260})),
@@ -465,7 +485,7 @@ function App(){
   const cmds=[...FLAT.map(p=>({l:'Go to '+p[1],f:()=>go(p[0])})),...D.cs.map(c=>({l:'Open '+c.name,f:()=>{setCid(c.id);setPal(false)}})),{l:'Download executive PDF',f:()=>{setPal(false);expPdf()}},{l:'Export transactions CSV',f:()=>{setPal(false);expTx()}}].filter(c=>c.l.toLowerCase().includes(pq.toLowerCase())).slice(0,9);
   return h('div',{className:'flex h-full relative'},h('div',{id:'aurora','aria-hidden':true}),h(Ambient,{q:qual==='low'?'off':'on'}),
     h('aside',{className:'flex-none m-2 mr-0 flex-col hidden md:flex relative z-10 gl',style:{width:D.col?64:224,transition:'width .3s cubic-bezier(.2,.8,.2,1)',borderRadius:20}},
-      h('div',{className:'flex items-center gap-2 px-3 pt-3 pb-2'},h('span',{className:'w-7 h-7 rounded-lg flex-none',style:{background:'linear-gradient(135deg,#f6efe2,#ff6a5c)',boxShadow:'0 0 18px -4px #ff6a5c'}}),!D.col&&h('span',{className:'font-semibold tracking-tight flex-1'},'RevenueOS'),h('button',{className:'nav !w-auto !p-1.5','aria-label':D.col?'Expand sidebar':'Collapse sidebar',title:D.col?'Expand':'Collapse',onClick:()=>setD(d=>({...d,col:!d.col}))},h(Ic,{d:IC.menu,s:16}))),
+      h('div',{className:'flex items-center gap-2 px-3 pt-3 pb-2'},h('span',{className:'w-7 h-7 rounded-lg flex-none',style:{background:'#e5484d',boxShadow:'0 0 14px -8px rgba(229,72,77,.6)'}}),!D.col&&h('span',{className:'font-semibold tracking-tight flex-1'},'RevenueOS'),h('button',{className:'nav !w-auto !p-1.5','aria-label':D.col?'Expand sidebar':'Collapse sidebar',title:D.col?'Expand':'Collapse',onClick:()=>setD(d=>({...d,col:!d.col}))},h(Ic,{d:IC.menu,s:16}))),
       !D.col&&h('button',{className:'mx-2 mb-2 flex items-center gap-2 px-3 py-1.5 rounded-lg border hair mut text-xs cursor-pointer hover:text-[var(--fg)]',onClick:()=>{setPal(true);setPq('');setPi(0)}},h(Ic,{d:IC.search,s:14}),h('span',{className:'flex-1 text-left'},'Search'),h('kbd',{className:'text-[10px] border hair rounded px-1'},'⌘K')),
       h('nav',{className:'flex-1 overflow-y-auto px-2 pb-2',style:{scrollbarWidth:'thin'},'aria-label':'Main'},PAGES.map(g=>{const bd={ret:K2.risk.length,pl:D.ds.filter(d=>d.stage<4).length,tx:K2.pend.length},open=!(D.gc||{})[g[0]]||g[1].some(p=>p[0]===nav);return h('div',{key:g[0],className:'mb-1'},
         !D.col?h('button',{className:'flex w-full items-center justify-between px-3 py-1.5 text-[11px] mut cursor-pointer hover:text-[var(--fg)]','aria-expanded':open,onClick:()=>setD(d=>({...d,gc:{...(d.gc||{}),[g[0]]:open}}))},g[0],h('span',{style:{display:'inline-flex',transform:open?'none':'rotate(-90deg)',transition:'transform .2s'}},h(Ic,{d:'M6 9l6 6 6-6',s:12}))):h('div',{className:'my-2 mx-3 border-t hair'}),
