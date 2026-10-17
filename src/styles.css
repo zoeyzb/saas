@@ -135,3 +135,61 @@ select option{background:#111;color:#f6efe2}input:focus,textarea:focus,select:fo
   .skyline-help{font-size:10px;white-space:nowrap;left:13px;bottom:8px}
   .skyline-timeline{left:4%;right:4%}
 }
+
+/* RevenueOS information architecture / editorial hierarchy */
+.page-heading{margin:5px 0 21px}
+.page-title{font-family:'Instrument Serif',Georgia,serif;font-size:clamp(34px,2.9vw,44px);font-weight:400;line-height:1.08;letter-spacing:-.025em;color:var(--fg)}
+.page-subtitle{color:var(--mut);font-size:13px;line-height:1.6;margin-top:8px;max-width:66ch}
+.nav-primary{min-height:47px;margin-bottom:6px;padding:10px 13px!important;border-radius:12px;gap:13px;font-size:14px;color:var(--mut)}
+.nav-primary.is-active{background:rgba(243,238,227,.075);color:var(--fg);box-shadow:inset 2px 0 0 var(--red)}
+.nav-primary:hover{color:var(--fg)}
+.context-tabs{display:flex;gap:20px;overflow-x:auto;white-space:nowrap;border-bottom:1px solid var(--line);margin:0 0 21px;padding:0 2px;scrollbar-width:thin}
+.context-tab{border:0;border-bottom:2px solid transparent;padding:14px 1px 13px;background:transparent;color:var(--mut);font-size:13px;cursor:pointer;transition:color .18s,border-color .18s}
+.context-tab:hover{color:var(--fg)}
+.context-tab[aria-current=page]{color:var(--fg);border-bottom-color:var(--fg)}
+.header-mrr{display:flex;gap:9px;align-items:center;font-size:13px}
+.header-mrr .mut{font-size:10px;letter-spacing:.09em}
+.header-mrr strong{font-weight:500;color:var(--fg)}
+:root[data-theme="light"] .nav-primary.is-active{background:rgba(12,10,9,.055)}
+@media(max-width:780px){
+  .page-title{font-size:34px}
+  .page-heading{margin:8px 0 15px}
+  .context-tabs{gap:18px}
+}
+
+/* Command Center: one purpose per surface, no giant filler panels */
+.section-title{font-family:'Instrument Serif',Georgia,serif;font-size:26px;line-height:1.15;letter-spacing:-.02em}
+.command-hero{height:clamp(338px,43vh,412px)}
+.signal-mini{padding:13px 0;border-top:1px solid var(--line)}
+.signal-mini:first-of-type{border-top:0}
+.signal-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-top:6px;flex:none}
+.signal-urgent{background:var(--red)}
+.signal-growth{background:var(--revenue)}
+.signal-link{font-size:12px;color:var(--fg);margin-top:7px;text-decoration:underline;text-underline-offset:4px;cursor:pointer;background:transparent;border:0}
+.signal-link:hover{color:var(--revenue)}
+.operating-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.operating-item{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:18px 22px;text-align:left;border:0;background:transparent;color:var(--fg);border-right:1px solid var(--line);cursor:pointer}
+.operating-item:last-child{border-right:0}
+.operating-item:hover{background:var(--hv)}
+.intelligence-stat{padding:21px 23px}
+.intelligence-value{font-size:32px;letter-spacing:-.025em;line-height:1.15;font-weight:600;margin-top:12px}
+.insight-card{padding:23px;min-height:221px;display:flex;flex-direction:column;align-items:flex-start}
+.insight-category{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--revenue)}
+.insight-category.insight-attention{color:var(--red)}
+.insight-title{font-size:19px;font-weight:500;line-height:1.25;letter-spacing:-.02em;margin-top:16px}
+@media(max-width:680px){
+  .command-hero{height:384px}
+  .operating-strip{grid-template-columns:1fr}
+  .operating-item{border-right:0;border-bottom:1px solid var(--line);padding:14px 18px}
+  .operating-item:last-child{border-bottom:0}
+  .intelligence-value{font-size:27px}
+  .insight-card{min-height:0}
+}
+
+.settings-page{max-width:1040px;margin:0}
+.settings-surface{padding:24px 28px}
+.settings-field{padding:20px 0;border-bottom:1px solid var(--line)}
+.settings-danger{display:flex;align-items:center;gap:16px;justify-content:space-between;padding-top:24px;flex-wrap:wrap}
+.settings-choice-row{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:22px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.settings-choice-row:last-child{border-bottom:0}
+@media(max-width:680px){.settings-surface{padding:19px}.settings-choice-row{align-items:flex-start;flex-direction:column}}

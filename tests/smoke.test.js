@@ -3,7 +3,7 @@
 const fs=require('fs'),path=require('path');
 const file=process.argv[2]||path.join(__dirname,'..','src','app.js');
 let src=fs.readFileSync(file,'utf8');
-global.window=global;
+global.window=global;global.confirm=()=>true;
 global.localStorage={_d:{},getItem(k){return this._d[k]||null},setItem(k,v){this._d[k]=v}};
 global.location={hash:''};global.addEventListener=global.removeEventListener=()=>{};global.devicePixelRatio=1;
 global.document={getElementById:()=>({}),title:'',documentElement:{removeAttribute(){},dataset:{}},addEventListener(){},removeEventListener(){},createElement:()=>({click(){},remove(){},style:{}}),body:{appendChild(){}},elementsFromPoint:()=>[]};
@@ -15,7 +15,7 @@ global.React={createElement:(t,p,...c)=>({t,p:p||{},c:c.flat(Infinity).filter(x=
   useRef(v){const s=cur.inst,i=cur.i++;if(!(i in s.slots))s.slots[i]={current:v===undefined?null:v};return s.slots[i]},
   useEffect(){},useId(){return'u'+(cur.i++)},useMemo:f=>f()};
 global.ReactDOM={createRoot:()=>({render:el=>roots.push(el)})};
-src+=';globalThis.__x={load,calc,mrrAt,MO,FLAT,sum}';
+src+=';globalThis.__x={load,calc,mrrAt,MO,FLAT,PAGES,sum}';
 (0,eval)(src);
 const X=global.__x,AppF=roots[0].t;
 function expand(n,p){if(n==null||n===false||typeof n==='string'||typeof n==='number')return n;if(Array.isArray(n))return n.map((x,i)=>expand(x,p+'/'+i));
@@ -29,17 +29,33 @@ const btn=(tree,label)=>find(tree,n=>n.t==='button'&&txt(n).trim()===label);
 const D=()=>store.root.slots[0].v,K=()=>X.calc(D()),wait=ms=>new Promise(r=>setTimeout(r,ms));
 let fails=0,passes=0;const ok=(c,m)=>{if(c){passes++}else{fails++;console.log('FAIL:',m)}};
 const click=(tree,label,i=0)=>{const b=btn(tree,label)[i];if(!b)throw new Error('no button '+label);b.p.onClick({});return render()};
-const goPage=(tree,label)=>{const b=find(tree,n=>n.t==='button'&&n.p.title===label)[0];if(!b)throw new Error('no nav '+label);b.p.onClick({});return render()};
+const goPage=(tree,label)=>{
+  const aliases={'Command Center':'cc','Revenue':'rev','Customers':'crm','Intelligence':'ins','Operations':'auto','Settings':'st','CRM':'crm'};
+  const target=aliases[label]||X.FLAT.find(p=>p[1]===label)?.[0],group=X.PAGES.find(g=>g[1].some(p=>p[0]===target));
+  if(!target||!group)throw new Error('unknown destination '+label);
+  const primary=find(tree,n=>n.t==='button'&&n.p.title===group[0])[0];
+  if(!primary)throw new Error('no primary nav '+group[0]);
+  primary.p.onClick({});tree=render();
+  if(D().nav!==target){
+    const tab=find(tree,n=>n.t==='button'&&n.p.className==='context-tab'&&txt(n)===group[1].find(p=>p[0]===target)[1])[0];
+    if(!tab)throw new Error('no context tab for '+label);
+    tab.p.onClick({});tree=render();
+  }
+  return tree;
+};
 const submit=(tree,vals)=>{const f=find(tree,n=>n.t==='form'&&n.p.role==='dialog')[0];if(!f)throw new Error('no form');f.p.onSubmit({preventDefault(){},target:vals});return render()};
 (async()=>{
   let tree=render();ok(D().nav==='cc'&&txt(tree).includes('Command Center'),'starts on Command Center');
-  // 1. every page renders and is reachable from the sidebar
+  // 1. every page renders via the six primary destinations and contextual tabs
   for(const[k,l]of X.FLAT){tree=goPage(tree,l);ok(D().nav===k&&txt(tree).length>150,'page '+l)}
-  // 2. sidebar: collapse, expand, group toggle
+  // 2. sidebar: only six primary destinations, collapse/expand, contextual Revenue tabs
   tree=goPage(tree,'Command Center');
+  ok(find(tree,n=>n.t==='button'&&typeof n.p.className==='string'&&n.p.className.includes('nav-primary')).length===6,'six primary destinations');
   let b=find(tree,n=>n.t==='button'&&n.p['aria-label']==='Collapse sidebar')[0];b.p.onClick({});tree=render();ok(D().col===true,'sidebar collapses');
   b=find(tree,n=>n.t==='button'&&n.p['aria-label']==='Expand sidebar')[0];b.p.onClick({});tree=render();ok(D().col===false,'sidebar expands');
-  b=find(tree,n=>n.t==='button'&&n.p['aria-expanded']!==undefined&&txt(n).startsWith('Finance'))[0];b.p.onClick({});tree=render();ok(D().gc.Finance===true,'group collapses');b=find(tree,n=>n.t==='button'&&n.p['aria-expanded']!==undefined&&txt(n).startsWith('Finance'))[0];b.p.onClick({});tree=render();ok(D().gc.Finance===false,'group reopens');
+  tree=goPage(tree,'Revenue');ok(find(tree,n=>n.t==='button'&&n.p.className==='context-tab').length===6,'Revenue context tabs');
+  tree=goPage(tree,'Forecasting');ok(D().nav==='fc','context tab navigates to Forecasting');
+  tree=goPage(tree,'Command Center');
   // 3. pipeline: menu move to Won creates customer, payment, MRR and workflow
   tree=goPage(tree,'Pipeline');
   let c0=D().cs.length,m0=K().mrr,r0=(D().runs||[]).length,t0=D().tx.length;
@@ -63,7 +79,7 @@ const submit=(tree,vals)=>{const f=find(tree,n=>n.t==='form'&&n.p.role==='dialog
   tree=click(tree,'Export CSV');await wait(30);ok(blobs.length===1&&(await blobs[0].text()).includes('"Date","Type"'),'CSV export produces a file');
   // 7. retention, insights actions
   tree=goPage(tree,'Retention');let h0=X.sum(D().cs,c=>c.health);tree=click(tree,'Log call');ok(X.sum(D().cs,c=>c.health)>h0,'log call raises health');
-  tree=goPage(tree,'Command Center');m0=K().mrr;const up=btn(tree,'Upgrade top 3')[0];if(up){up.p.onClick({});tree=render();ok(K().mrr>m0,'insight upgrade action raises MRR')}
+  tree=goPage(tree,'Intelligence');m0=K().mrr;const up=btn(tree,'Simulate upgrades')[0];if(up){up.p.onClick({});tree=render();ok(K().mrr>m0,'confirmed local upgrade simulation raises MRR')}
   // 8. marketing and automations
   tree=goPage(tree,'Marketing');tree=click(tree,'Pause');ok(D().mk[0].on===false,'campaign pause');
   tree=goPage(tree,'Automations');const sw=find(tree,n=>n.t==='button'&&n.p.role==='switch')[0];sw.p.onClick({});tree=render();ok(D().auto[0].on===false,'workflow toggle');
@@ -83,8 +99,15 @@ const submit=(tree,vals)=>{const f=find(tree,n=>n.t==='form'&&n.p.role==='dialog
   tree=click(tree,'Re-authorize');ok(!D().ig.gads.attn,'re-authorize clears attention');
   tree=click(tree,'Connect');ok(!!txt(tree).includes('Authorize'),'connect flow opens');const au=find(tree,n=>n.t==='button'&&txt(n).startsWith('Authorize'))[0];au.p.onClick({});tree=render();
   const cb=find(tree,n=>n.t==='button'&&txt(n).startsWith('Connect '))[0];cb.p.onClick({});tree=render();ok(Object.keys(D().ig).length===6,'service connects');
-  // 11. settings
-  tree=goPage(tree,'Settings');tree=click(tree,'Appearance');tree=click(tree,'Light');ok(D().theme==='light','theme setting');find(tree,n=>n.t==='button'&&n.p['aria-pressed']!==undefined&&txt(n)==='Workspace')[0].p.onClick({});tree=render();tree=click(tree,'Reset workspace data');tree=render();ok(D().cs.length===24,'reset restores seed data');
+  // 11. settings; unsupported currency conversion is not shown as an editable dropdown
+  tree=goPage(tree,'Settings');
+  ok(!txt(tree).includes('Currency USD EUR GBP'),'misleading currency selector removed');
+  tree=goPage(tree,'Appearance');tree=click(tree,'Light');ok(D().theme==='light','theme setting');
+  tree=goPage(tree,'Audit log');ok(txt(tree).includes('Activity log'),'audit log is accessible');
+  tree=goPage(tree,'Team & access');ok(txt(tree).includes('Preview team roles'),'team roles labelled as simulated');
+  tree=goPage(tree,'Settings');
+  global.confirm=()=>false;const preReset=D().cs.length;tree=click(tree,'Reset sample data');ok(D().cs.length===preReset,'cancelled reset preserves records');
+  global.confirm=()=>true;tree=click(tree,'Reset sample data');tree=render();ok(D().cs.length===24,'confirmed reset restores seed data');
   // 12. data invariants
   const d=D(),k=K(),mm=k.mrrS,a5=5,nw=d.cs.filter(c=>c.start>a5&&c.start<=11).reduce((s,c)=>s+X.mrrAt(c,c.start),0),ex=d.cs.filter(c=>c.ch==null&&c.upm!=null&&c.upm>a5&&c.upm>c.start).reduce((s,c)=>s+c.mrr-c.prev,0),cn=d.cs.filter(c=>c.ch!=null&&c.ch>a5).reduce((s,c)=>s+X.mrrAt(c,c.ch-1),0);
   ok(mm[a5]+nw+ex-cn===mm[11],'MRR bridge reconciles');ok(Math.abs(k.cash-(d.cash0+k.prof.reduce((a,v)=>a+v,0)))<1,'cash reconciles');

@@ -206,7 +206,7 @@ function Wf({S,H=210}){const id=useId().replace(/:/g,''),[hi,setHi]=useState(nul
   return h('svg',{viewBox:'0 0 '+W+' '+H,className:'w-full',role:'img','aria-label':'Bridge chart',onMouseLeave:()=>setHi(null)},h('defs',null,bars.map((b,i)=>h('linearGradient',{key:i,id:id+i,x1:0,y1:0,x2:0,y2:1},h('stop',{offset:0,stopColor:pal(b)[0]}),h('stop',{offset:1,stopColor:pal(b)[1]})))),
     tk.map((v,k)=>h('g',{key:k},h('line',{x1:pl,x2:W-6,y1:Y(v),y2:Y(v),stroke:'var(--line)'}),h('text',{x:pl-6,y:Y(v)+4,fill:'var(--mut)',fontSize:10,textAnchor:'end'},$k(v)))),
     bars.map((b,i)=>{const x=pl+i*bw+bw*.2,w=bw*.6,y=Y(b.hi),hh=Math.max(2,Y(b.lo)-Y(b.hi)),p=pal(b);return h('g',{key:i,onMouseEnter:()=>setHi(i),className:'rise',style:{animationDelay:i*60+'ms',opacity:hi!=null&&hi!==i?.55:1,transition:'opacity .2s'}},h('rect',{x,y,width:w,height:hh,fill:'url(#'+id+i+')'}),h('polygon',{points:[x,y,x+dx,y+dy,x+w+dx,y+dy,x+w,y].join(' '),fill:p[2]}),h('polygon',{points:[x+w,y,x+w+dx,y+dy,x+w+dx,y+hh+dy,x+w,y+hh].join(' '),fill:p[3]}),h('text',{x:x+w/2,y:y-7,textAnchor:'middle',fill:'var(--fg)',fontSize:11,fontWeight:600},(b.t==='total'?'':b.v>=0?'+':'')+$k(b.v)),h('text',{x:x+w/2,y:H-6,textAnchor:'middle',fill:'var(--mut)',fontSize:9.5},b.n))}))}
-function Num({n,f}){const ref=useRef(),prev=useRef(0);useEffect(()=>{const el=ref.current;if(!el)return;if(!window.gsap||reduceM){el.textContent=f(n);prev.current=n;return}const o={v:prev.current};gsap.to(o,{v:n,duration:1.1,ease:'power3.out',overwrite:true,onUpdate:()=>{el.textContent=f(o.v)},onComplete:()=>{prev.current=n}})},[n]);return h('span',{ref},f(n))}
+function Num({n,f}){return h('span',{className:'tn'},f(n))}
 function SpI({d,f,L,c='#f6efe2',w=76,hh=34}){const[i,setI]=useState(null),id=useId().replace(/:/g,''),mn=Math.min(...d),mx=Math.max(...d),X=k=>k/(d.length-1)*w,Y=v=>hh-4-(v-mn)/(mx-mn||1)*(hh-9),pts=d.map((v,k)=>X(k).toFixed(1)+','+Y(v).toFixed(1)).join(' ');
   return h('div',{className:'relative flex-none'},h('svg',{width:w,height:hh,viewBox:'0 0 '+w+' '+hh,style:{overflow:'visible'},onMouseMove:e=>{const b=e.currentTarget.getBoundingClientRect();setI(Math.max(0,Math.min(d.length-1,Math.round((e.clientX-b.left)/b.width*(d.length-1)))))},onMouseLeave:()=>setI(null)},
     h('defs',null,h('linearGradient',{id,x1:0,y1:0,x2:0,y2:1},h('stop',{offset:0,stopColor:c,stopOpacity:.4}),h('stop',{offset:1,stopColor:c,stopOpacity:0}))),h('polygon',{points:pts+' '+w+','+hh+' 0,'+hh,fill:'url(#'+id+')'}),h('polyline',{points:pts,fill:'none',stroke:c,strokeWidth:1.8,strokeLinejoin:'round',style:{filter:'drop-shadow(0 0 4px '+c+')'}}),i!=null&&h('g',null,h('line',{x1:X(i),x2:X(i),y1:0,y2:hh,stroke:c,opacity:.35}),h('circle',{cx:X(i),cy:Y(d[i]),r:3.5,fill:c}))),
@@ -231,12 +231,12 @@ function Stack({S,L,H=230,f=$k}){const[off,setOff]=useState([]),[hi,setHi]=useSt
     h('div',{className:'flex gap-2 flex-wrap mt-2'},S.map(s=>h('button',{key:s.n,className:'chip !py-0.5 text-xs','aria-pressed':!off.includes(s.n),onClick:()=>setOff(off.includes(s.n)?off.filter(x=>x!==s.n):[...off,s.n])},h('span',{className:'inline-block w-2 h-2 rounded-full mr-1.5',style:{background:s.c}}),s.n))))}
 function Ring({v,label,big,sub,c='#fff4e4'}){const id=useId().replace(/:/g,''),r=38,C=2*Math.PI*r,k=Math.max(0,Math.min(1,v));return h('div',{className:'text-center'},h('svg',{width:104,height:104,viewBox:'0 0 104 104',role:'img','aria-label':label+' '+big},h('defs',null,h('linearGradient',{id,x1:0,y1:0,x2:1,y2:1},h('stop',{offset:0,stopColor:c}),h('stop',{offset:1,stopColor:'#ff6a5c'}))),h('circle',{cx:52,cy:52,r,fill:'none',stroke:'var(--hv)',strokeWidth:9}),h('circle',{cx:52,cy:52,r,fill:'none',stroke:'url(#'+id+')',strokeWidth:9,strokeLinecap:'round',strokeDasharray:C,strokeDashoffset:C*(1-k),transform:'rotate(-90 52 52)',style:{filter:'drop-shadow(0 0 6px rgba(255,106,92,.6))',transition:'stroke-dashoffset 1s cubic-bezier(.2,.8,.2,1)'}}),h('text',{x:52,y:57,textAnchor:'middle',fill:'var(--fg)',fontSize:17,fontWeight:600},big)),h('div',{className:'text-xs font-medium'},label),h('div',{className:'mut text-[11px]'},sub))}
 function Ambient({q}){const ref=useRef();useEffect(()=>{if(q==='off')return;const el=ref.current,r=new THREE.WebGLRenderer({antialias:false,alpha:true});r.setPixelRatio(Math.min(devicePixelRatio,1.5));el.appendChild(r.domElement);const sc=new THREE.Scene(),cam=new THREE.PerspectiveCamera(50,1,.1,100);cam.position.set(0,3,9);
-  const gd=new THREE.GridHelper(60,60,0xff6a5c,0x2a2420);gd.position.y=-3;gd.material.transparent=true;gd.material.opacity=.35;sc.add(gd);
+  const gd=new THREE.GridHelper(60,60,0xff6a5c,0x2a2420);gd.position.y=-3;gd.material.transparent=true;gd.material.opacity=.17;sc.add(gd);
   const n=160,pa=new Float32Array(n*3);for(let i=0;i<n;i++){pa[i*3]=(Math.random()-.5)*30;pa[i*3+1]=Math.random()*10-3;pa[i*3+2]=(Math.random()-.5)*30}
-  const pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.BufferAttribute(pa,3));const pts=new THREE.Points(pg,new THREE.PointsMaterial({color:0xffd9c4,size:.05,transparent:true,opacity:.55}));sc.add(pts);
+  const pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.BufferAttribute(pa,3));const pts=new THREE.Points(pg,new THREE.PointsMaterial({color:0xd9b59a,size:.04,transparent:true,opacity:.34}));sc.add(pts);
   const size=()=>{r.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()};size();addEventListener('resize',size);
   const m={x:0,y:0},mv=e=>{m.x=e.clientX/innerWidth-.5;m.y=e.clientY/innerHeight-.5};addEventListener('pointermove',mv);let raf;
-  (function loop(t){cam.position.x+=(m.x*2-cam.position.x)*.03;cam.position.y+=(3-m.y*1.2-cam.position.y)*.03;cam.lookAt(0,-.5,-4);if(!reduceM){gd.position.z=(t*.0006)%1;pts.rotation.y=t*.00003}r.render(sc,cam);raf=requestAnimationFrame(loop)})(0);
+  (function loop(t){if(document.hidden){raf=requestAnimationFrame(loop);return;}cam.position.x+=(m.x*2-cam.position.x)*.03;cam.position.y+=(3-m.y*1.2-cam.position.y)*.03;cam.lookAt(0,-.5,-4);if(!reduceM){gd.position.z=(t*.0006)%1;pts.rotation.y=t*.00003}r.render(sc,cam);raf=requestAnimationFrame(loop)})(0);
   return()=>{cancelAnimationFrame(raf);removeEventListener('resize',size);removeEventListener('pointermove',mv);r.dispose();if(r.domElement.parentNode===el)el.removeChild(r.domElement)}},[q]);return h('div',{ref,'aria-hidden':true,style:{position:'fixed',inset:0,zIndex:0,pointerEvents:'none',opacity:.55}})}
 function Board({ds,move}){
   const[dr,setDr]=useState(null),[sel,setSel]=useState(0),sc=useRef(),refs=useRef([]),dref=useRef(null),ini=n=>n.split(' ').map(x=>x[0]).join('').slice(0,2);
@@ -258,15 +258,26 @@ function Board({ds,move}){
     dd&&card(dd,true))}
 const Ic=({d,s=17})=>h('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.6,strokeLinecap:'round',strokeLinejoin:'round','aria-hidden':true,className:'flex-none'},h('path',{d}));
 const IC={cc:'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z',rev:'M4 20V10M10 20V4M16 20v-8M22 20H2',ins:'M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2z',fc:'M3 17l6-6 4 4 8-9M15 6h6v6',crm:'M9 11a3 3 0 100-6 3 3 0 000 6zM3 20c0-3 3-5 6-5s6 2 6 5M17 8a2.5 2.5 0 110 5M21 19c0-2-1.5-3.5-3.5-4',pl:'M4 4h5v16H4zM10 4h5v10h-5zM16 4h5v6h-5z',ret:'M4 12a8 8 0 018-8 8 8 0 016 2.7M20 12a8 8 0 01-8 8 8 8 0 01-6-2.7M18 3v4h-4M6 21v-4h4',sub:'M12 3l9 5-9 5-9-5zM3 13l9 5 9-5',tx:'M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4',pf:'M12 3a9 9 0 109 9h-9zM13 3.1A9 9 0 0120.9 11H13z',rp:'M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h7',st:'M4 7h10M18 7h2M4 17h2M10 17h10M14 5v4M8 15v4',mk:'M3 11l18-7v16L3 13zM7 14v5',auto:'M13 2L4 14h7l-1 8 9-12h-7z',int:'M9 7V3M15 7V3M7 7h10v4a5 5 0 01-10 0zM12 16v5',team:'M9 11a3 3 0 100-6 3 3 0 000 6zM3 20c0-3 3-5 6-5s6 2 6 5M17 8a2.5 2.5 0 110 5M21 19c0-2-1.5-3.5-3.5-4',menu:'M4 7h16M4 12h16M4 17h16',search:'M11 4a7 7 0 100 14 7 7 0 000-14zM20 20l-4-4',x:'M6 6l12 12M18 6L6 18'};
-const PAGES=[['Overview',[['cc','Command Center'],['rev','Revenue'],['ins','Insights'],['fc','Forecasting']]],['Customers',[['crm','CRM'],['pl','Pipeline'],['mk','Marketing'],['ret','Retention']]],['Finance',[['sub','Subscriptions'],['tx','Transactions'],['pf','Profitability'],['rp','Reports']]],['Operations',[['auto','Automations'],['int','Integrations'],['team','Team']]],['Workspace',[['st','Settings']]]];
+const PAGES=[
+  ['Command Center',[['cc','Command Center']]],
+  ['Revenue',[['rev','Analytics'],['fc','Forecasting'],['sub','Subscriptions'],['tx','Transactions'],['pf','Profitability'],['rp','Reports']]],
+  ['Customers',[['crm','Accounts'],['pl','Pipeline'],['ret','Retention'],['mk','Marketing']]],
+  ['Intelligence',[['ins','Signals']]],
+  ['Operations',[['auto','Automations'],['int','Integrations']]],
+  ['Settings',[['st','Workspace'],['team','Team & access'],['appearance','Appearance'],['audit','Audit log']]]
+];
+const PRIMARY_ICONS=['cc','rev','crm','ins','auto','st'];
+const navContext=(n)=>PAGES.find(g=>g[1].some(p=>p[0]===n))||PAGES[0];
 const FLAT=PAGES.flatMap(g=>g[1]);
 /* ---------- app ---------- */
 function App(){
   const[D,setD]=useState(load),[pal,setPal]=useState(false),[pq,setPq]=useState(''),[pi,setPi]=useState(0),[cid,setCid]=useState(null),[toast,setToast]=useState(''),[q,setQ]=useState(''),[tf,setTf]=useState('all'),[mo,setMo]=useState('all'),[dr,setDr]=useState(null),[stab,setStab]=useState('workspace'),[rf,setRf]=useState('all'),[nt,setNt]=useState(''),[fm,setFm]=useState(null),[qual,setQual]=useState('high'),[igm,setIgm]=useState(null),[hmode,setHmode]=useState('plan'),[isel,setIsel]=useState(null),[sy,setSy]=useState(null),[ifl,setIfl]=useState('all'),[iq2,setIq2]=useState('');
+  const mainRef=useRef(null);
   const K2=calc(D),nav=D.nav,flash=m=>{setToast(m);clearTimeout(flash.t);flash.t=setTimeout(()=>setToast(''),3200)};
   const up=(fn,msg)=>setD(d=>{const n=fn(d);return msg?{...n,log:[{m:msg,ts:Date.now()},...n.log].slice(0,80)}:n});
   const go=nav=>{setD(d=>({...d,nav}));setCid(null);setPal(false)};
   useEffect(()=>{try{localStorage.setItem(K,JSON.stringify(D))}catch(e){}},[D]);
+  useEffect(()=>{if(mainRef.current)mainRef.current.scrollTop=0},[D.nav]);
   useEffect(()=>{try{if(location.hash!=='#/'+D.nav)location.hash='/'+D.nav;const f=FLAT.find(p=>p[0]===D.nav);document.title='RevenueOS — '+(f?f[1]:'')}catch(e){}},[D.nav]);
   useEffect(()=>{const f=()=>{const m=location.hash.replace('#/','');if(m)setD(d=>({...d,nav:m}))};addEventListener('hashchange',f);return()=>removeEventListener('hashchange',f)},[]);
   useEffect(()=>{try{if(D.theme==='system')document.documentElement.removeAttribute('data-theme');else document.documentElement.dataset.theme=D.theme}catch(e){}},[D.theme]);
@@ -301,47 +312,72 @@ function App(){
     save('revenue-report.pdf',doc.output('blob'))}catch(e){flash('Could not build the PDF')}};
   /* shared UI */
   const bt=(l,f,c)=>h('button',{className:'btn '+(c||''),onClick:f},l),dot=c=>h('span',{className:'inline-block w-2 h-2 rounded-full mr-2',style:{background:c}});
-  const th=a=>h('thead',null,h('tr',{className:'border-b hair'},a.map(x=>h('th',{key:x,className:'text-left font-medium mut px-4 py-3 whitespace-nowrap'},x)))),H1=(t,ch)=>h('div',{className:'flex items-center gap-3 flex-wrap'},h('h1',{className:'text-xl font-semibold tracking-tight mr-auto'},t),ch);
+  const th=a=>h('thead',null,h('tr',{className:'border-b hair'},a.map(x=>h('th',{key:x,className:'text-left font-medium mut px-4 py-3 whitespace-nowrap'},x)))),
+        H1=(t,ch,sub)=>h('header',{className:'page-heading'},h('div',{className:'flex items-center gap-3 flex-wrap justify-between'},h('h1',{className:'page-title'},t),ch),sub&&h('p',{className:'page-subtitle'},sub));
   const hc=v=>v<50?'#e5484d':v<70?'#d9b59a':'#8fae8b';
   const Kpi=(l,v,s,red)=>h('div',{key:l,className:'p-5'},h('div',{className:'mut text-xs'},l),h('div',{className:'text-2xl font-semibold leading-none mt-2 tn '+(red?'red':'')},v),h('div',{className:'mut text-xs mt-2'},s));
   const dMoM=(a,b)=>b?((a-b)/b*100):0,mm=K2.mrrS,dl=(a,b)=>{const x=dMoM(a,b);return (x>=0?'+':'')+x.toFixed(1)+'% vs last month'};
-  const apply=i=>{if(i.id==='risk'){K2.risk.forEach(c=>rescue(c.id));flash('Success calls logged for '+K2.risk.length+' at-risk accounts')}else if(i.id==='exp'){const top=K2.act.filter(c=>c.health>=80&&c.plan<3).sort((a,b)=>b.health-a.health).slice(0,3);top.forEach(c=>setPlan(c.id,c.plan+1));flash('Moved '+top.length+' accounts up one tier')}};
-  const insRow=i=>h('div',{key:i.id,className:'py-3 border-t hair first:border-0'},h('div',{className:'font-medium'},i.t),h('div',{className:'mut text-[13px] mt-0.5 max-w-[62ch]'},i.w),h('div',{className:'flex gap-3 mt-2 flex-wrap items-center'},(i.id==='risk'||i.id==='exp')&&h('button',{className:'btn !min-h-[30px] !py-1 text-xs',onClick:()=>apply(i)},i.id==='risk'?'Log calls for all':'Upgrade top 3'),h('button',{className:'underline underline-offset-4 cursor-pointer text-[13px] mut hover:text-[var(--fg)]',onClick:()=>go(i.to)},i.a)));
+  const apply=i=>{
+    if(i.id==='risk'){
+      if(!window.confirm('Simulate completed follow-up calls for '+K2.risk.length+' account(s)? This updates their health scores and adds activity records locally.'))return;
+      K2.risk.forEach(c=>rescue(c.id));flash('Simulated follow-ups logged for '+K2.risk.length+' accounts');
+    }else if(i.id==='exp'){
+      const top=K2.act.filter(c=>c.health>=80&&c.plan<3).sort((a,b)=>b.health-a.health).slice(0,3);
+      if(!window.confirm('Simulate plan upgrades for '+top.length+' accounts? Their plans and MRR will update in this browser.'))return;
+      top.forEach(c=>setPlan(c.id,c.plan+1));flash('Simulated '+top.length+' upgrades');
+    }
+  };
+  const insRow=i=>h('div',{key:i.id,className:'py-3 border-t hair first:border-0'},h('div',{className:'font-medium'},i.t),h('div',{className:'mut text-[13px] mt-0.5 max-w-[62ch]'},i.w),h('div',{className:'flex gap-3 mt-2 flex-wrap items-center'},(i.id==='risk'||i.id==='exp')&&h('button',{className:'btn !min-h-[30px] !py-1 text-xs',onClick:()=>apply(i)},i.id==='risk'?'Simulate follow-ups':'Simulate upgrades'),h('button',{className:'underline underline-offset-4 cursor-pointer text-[13px] mut hover:text-[var(--fg)]',onClick:()=>go(i.to)},i.a)));
   const Kc=(l,n,f,sub,data,red,tag)=>h('div',{key:l,className:'gl tilt p-4 overflow-hidden'},h('div',{className:'absolute -right-10 -top-10 w-32 h-32 rounded-full blur-3xl pointer-events-none',style:{background:red?'#e5484d':'#d9b59a',opacity:red?.14:.065}}),h('div',{className:'mut text-xs relative'},l),h('div',{className:'flex items-end justify-between gap-2 mt-2 relative'},h('div',{className:'text-2xl leading-none font-semibold tn tracking-tight '+(red?'red':'')},h(Num,{n,f})),data&&h(SpI,{d:data,f,L:MO,c:red?'#e5484d':'#d9b59a'})),h('div',{className:'mt-2.5 text-xs relative flex items-center gap-1.5 flex-wrap'},tag!=null&&h('span',{className:'px-1.5 py-0.5 rounded-md text-[11px] font-medium',style:{background:tag>=0?'rgba(143,174,139,.14)':'rgba(229,72,77,.15)',color:tag>=0?'#a4c39f':'#ef7d81'}},(tag>=0?'▲ ':'▼ ')+Math.abs(tag).toFixed(1)+'%'),h('span',{className:'mut'},sub)));
   const pgs={};
   pgs.cc=()=>{
-    const rp=Array.from({length:12},()=>[0,0,0,0]);D.tx.forEach(x=>{if(x.st==='pending'||x.type==='expense')return;const c=D.cs.find(y=>y.id===x.cid),p=c?c.plan:0;rp[x.m][p]+=x.type==='refund'?-x.amt:x.amt});
-    const net=1+(D.as.g-D.as.c+D.as.e)/100,fcv=Array.from({length:6},(_,k)=>K2.mrr*Math.pow(net,k+1)),L18=[...MO,...Array.from({length:6},(_,k)=>new Date(NOW.getFullYear(),NOW.getMonth()+1+k,1).toLocaleString('en',{month:'short'}))],rev12=sum(K2.rev),exp12=sum(K2.exp);
-    const mm=K2.mrrS,g6=(mm[11]-mm[5])/(mm[5]||1)*100,cashS=K2.prof.map((_,i)=>D.cash0+sum(K2.prof.slice(0,i+1))),p3=sum(K2.prof.slice(9))/3,runway=p3>=0?'Cash-flow positive':Math.round(K2.cash/-p3)+' months of runway';
-    const a5=5,nw=sum(D.cs.filter(c=>c.start>a5&&c.start<=11),c=>mrrAt(c,c.start)),ex=sum(D.cs.filter(c=>c.ch==null&&c.upm!=null&&c.upm>a5&&c.upm>c.start),c=>c.mrr-c.prev),cn=sum(D.cs.filter(c=>c.ch!=null&&c.ch>a5),c=>mrrAt(c,c.ch-1)),
-      bridge=[{n:MO[a5],v:mm[a5],t:'total'},{n:'New',v:nw},{n:'Expansion',v:ex},{n:'Churn',v:-cn},{n:MO[11],v:mm[a5]+nw+ex-cn,t:'total'}];
-    const fun=ST.slice(0,5).map((s,i)=>{const m=D.ds.filter(d=>d.stage>=i&&d.stage<5);return{n:s,c:m.length,v:sum(m,d=>d.val)}}),seg=PL.map((p,i)=>({n:p[0],v:sum(K2.act.filter(c=>c.plan===i),c=>c.mrr),c:K2.act.filter(c=>c.plan===i).length})),mxs=Math.max(...seg.map(s=>s.v),1);
-    const rk=[...K2.risk].sort((a,b)=>b.mrr-a.mrr).slice(0,5),last=c=>c.notes.length?Math.round((Date.now()-c.notes[0].ts)/864e5)+'d ago':'no contact logged',proj=Array.from({length:13},(_,k)=>K2.mrr*Math.pow(1+(D.as.g-D.as.c+D.as.e)/100,k));
-    return h('div',{className:'pg space-y-3'},
-      h('div',{className:'flex items-center gap-3 flex-wrap'},h('h1',{className:'text-xl font-semibold tracking-tight mr-auto'},'Command Center'),h('span',{className:'mut text-xs'},D.ws.name+' · '+NOW.toLocaleDateString([],{month:'long',year:'numeric'}))),
-      h('div',{className:'gl relative overflow-hidden',style:{height:'clamp(322px,41vh,394px)'}},
+    const rp=Array.from({length:12},()=>[0,0,0,0]);
+    D.tx.forEach(x=>{if(x.st==='pending'||x.type==='expense')return;const c=D.cs.find(y=>y.id===x.cid),p=c?c.plan:0;rp[x.m][p]+=x.type==='refund'?-x.amt:x.amt});
+    const net=1+(D.as.g-D.as.c+D.as.e)/100,fcv=Array.from({length:6},(_,k)=>K2.mrr*Math.pow(net,k+1)),
+      L18=[...MO,...Array.from({length:6},(_,k)=>new Date(NOW.getFullYear(),NOW.getMonth()+1+k,1).toLocaleString('en',{month:'short'}))],
+      mm=K2.mrrS,rev12=sum(K2.rev),exp12=sum(K2.exp),
+      cashS=K2.prof.map((_,i)=>D.cash0+sum(K2.prof.slice(0,i+1))),g6=(mm[11]-mm[5])/(mm[5]||1)*100,a5=5,
+      nw=sum(D.cs.filter(c=>c.start>a5&&c.start<=11),c=>mrrAt(c,c.start)),
+      expansion=sum(D.cs.filter(c=>c.ch==null&&c.upm!=null&&c.upm>a5&&c.upm>c.start),c=>c.mrr-c.prev),
+      churn=sum(D.cs.filter(c=>c.ch!=null&&c.ch>a5),c=>mrrAt(c,c.ch-1)),
+      bridge=[{n:MO[a5],v:mm[a5],t:'total'},{n:'New',v:nw},{n:'Expansion',v:expansion},{n:'Churn',v:-churn},{n:MO[11],v:mm[a5]+nw+expansion-churn,t:'total'}],
+      riskMrr=sum(K2.risk,c=>c.mrr),priorities=[...ins].sort((x,y)=>({risk:0,inv:1,an:2,exp:3,pl:4,gm:5}[x.id]??6)-({risk:0,inv:1,an:2,exp:3,pl:4,gm:5}[y.id]??6)).slice(0,3);
+    return h('div',{className:'pg space-y-4'},
+      H1('Command Center',h('span',{className:'mut text-xs'},D.ws.name+' · '+NOW.toLocaleDateString([],{month:'long',year:'numeric'})),'A clear view of revenue performance, momentum and the decisions that matter.'),
+      h('section',{className:'gl relative overflow-hidden command-hero'},
         h(Skyline,{rp,ex:K2.exp,pr:K2.prof,fc:fcv,L:L18,mode:hmode,q:qual,onBar:(m,f)=>{if(f)go('fc');else{setMo(String(m));setTf('all');setQ('');go('tx')}}}),
-        h('div',{className:'absolute inset-x-0 top-0 h-px pointer-events-none',style:{background:'linear-gradient(90deg,transparent,rgba(243,238,227,.32),rgba(243,238,227,.12),transparent)',backgroundSize:'200% 100%',animation:'shift 6s linear infinite'}}),h('div',{className:'skyline-header absolute left-5 top-4 pointer-events-none'},h('div',{className:'mut text-xs'},'Revenue, last 12 months'),h('div',{className:'text-4xl font-semibold tn tracking-tight mt-1'},$k(rev12)),h('div',{className:'flex gap-4 mt-2 text-[13px]'},h('span',null,h('span',{className:'mut'},'Expenses '),$k(exp12)),h('span',null,h('span',{className:'mut'},'Profit '),h('span',{className:K2.prof.reduce((a,b)=>a+b,0)<0?'red':''},$k(sum(K2.prof)))),h('span',null,h('span',{className:'mut'},'MRR '),$k(K2.mrr)))),
-        h('div',{className:'skyline-controls absolute right-4 top-4 flex gap-1.5 flex-wrap justify-end'},[['plan','Revenue by plan'],['vs','Revenue vs expenses'],['profit','Profit']].map(x=>h('button',{key:x[0],className:'chip !py-1 !px-3 text-xs','aria-pressed':hmode===x[0],onClick:()=>setHmode(x[0])},x[1]))),
-        h('div',{className:'skyline-help absolute left-5 bottom-3 mut text-[11px] pointer-events-none max-w-[640px]'},'Select a month for transactions · Drag to rotate')),
-      h('div',{className:'grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3'},Kc('MRR',K2.mrr,$k,'since '+MO[5],mm,false,g6),Kc('ARR',K2.arr,$k,K2.act.length+' subscriptions',mm.map(v=>v*12)),Kc('Revenue, month',K2.rev[11],$k,'vs '+MO[10],K2.rev,false,dMoM(K2.rev[11],K2.rev[10])),Kc('Net profit',K2.prof[11],$k,'Margin '+pc(K2.rev[11]?K2.prof[11]/K2.rev[11]*100:0),K2.prof,K2.prof[11]<0),Kc('Cash',K2.cash,$k,runway,cashS),Kc('At-risk MRR',sum(K2.risk,c=>c.mrr),$k,K2.risk.length+' accounts under 50',null,K2.risk.length>0)),
-      h('div',{className:'grid lg:grid-cols-3 gap-3 dashboard-compact'},
-        Card('MRR bridge',MO[a5]+' to '+MO[11],h(Wf,{S:bridge})),
-        Card('Cash balance',$k(K2.cash)+' · '+runway,h(Lines,{S:[{n:'Cash',d:cashS,c:'var(--fg)',fill:1}],L:MO,H:200,W:410})),
-        Card('Sales funnel',D.ds.filter(d=>d.stage<4).length+' open deals · '+$k(K2.wp)+' weighted',h('div',null,fun.map((f,i)=>h('div',{key:f.n,className:'py-1.5'},h('div',{className:'flex justify-between text-[13px] mb-1'},h('span',null,f.n),h('span',{className:'mut tn'},f.c+' · '+$k(f.v)+(i?' · '+Math.round(f.c/(fun[i-1].c||1)*100)+'%':''))),h(Bar,{v:f.c,mx:fun[0].c,c:i===4?'var(--positive)':'var(--revenue)'})))),bt('Open pipeline',()=>go('pl'),'g'))),
-      h('div',{className:'grid lg:grid-cols-2 gap-3 dashboard-compact'},
-        Card('Customer segments','Active MRR by plan',h('div',null,seg.map(s=>h('div',{key:s.n,className:'py-1.5'},h('div',{className:'flex justify-between text-[13px] mb-1'},h('span',null,s.n+' · '+s.c),h('span',{className:'mut tn'},$k(s.v)+' · '+Math.round(s.v/(K2.mrr||1)*100)+'%')),h(Bar,{v:s.v,mx:mxs}))))),
-        Card('Risk intelligence',K2.risk.length+' accounts below 50 health',h('div',null,
-          h('div',{className:'flex justify-between items-end gap-4 pb-3'},h('div',null,h('div',{className:'mut text-xs'},'Revenue exposed'),h('div',{className:'text-2xl font-semibold red mt-1'},$k(sum(K2.risk,c=>c.mrr)))),h('div',{className:'text-right'},h('div',{className:'mut text-xs'},'Share of MRR'),h('div',{className:'font-medium'},pc(100*sum(K2.risk,c=>c.mrr)/(K2.mrr||1))))),
-          h(Bar,{v:sum(K2.risk,c=>c.mrr),mx:K2.mrr,c:'var(--red)'}),
-          rk.length?rk.map(c=>h('div',{key:c.id,className:'dashboard-risk flex items-center gap-3'},h('div',{className:'flex-1 min-w-0'},h('button',{className:'font-medium cursor-pointer text-left truncate max-w-full',onClick:()=>setCid(c.id)},c.name),h('div',{className:'mut text-xs mt-1'},$(c.mrr)+' MRR · health '+c.health+' · '+last(c))),bt('Log call',()=>rescue(c.id),'g'))):h('div',{className:'mut pt-4'},'No accounts at risk.'))),
-        h('div',{className:'gl p-4 lg:col-span-2'},h('div',{className:'font-semibold'},'Recommended actions'),h('div',{className:'mut text-xs mt-0.5 mb-2'},'Computed from your records'),h('div',{className:'insight-grid'},ins.slice(0,4).map(insRow)))),
-      h('div',{className:'grid lg:grid-cols-3 gap-3 dashboard-compact'},
-        Card('Forecast','Base case, next 12 months · '+$k(proj[12])+' MRR',h(Lines,{S:[{n:'MRR',d:[...mm,...Array(12).fill(null)],c:'var(--fg)',fill:1},{n:'Projected',d:[...Array(11).fill(null),K2.mrr,...proj.slice(1)],c:'var(--revenue)',dash:'5 4'}],L:[...MO,...Array(12).fill('')],H:190}),bt('Edit assumptions',()=>go('fc'),'g')),
-        Card('Profit by month','Revenue after all costs',h(Bars3D,{d:K2.prof,L:MO,H:220,lab:'Profit by month'})),
-        Card('Recent activity',D.log.length+' recorded events',h('div',null,
-          h('ul',null,D.log.slice(0,6).map((l,i)=>h('li',{key:i,className:'flex gap-3 py-2 border-t hair first:border-0 text-[13px]'},h('span',{className:'mut w-16 flex-none text-xs pt-0.5'},new Date(l.ts).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})),h('span',null,l.m)))),
-          D.log.length<=1&&h('div',{className:'mut text-xs border-t hair pt-3 mt-2'},'Events appear here as you work with customers, deals and invoices.')))))};
+        h('div',{className:'skyline-header absolute left-5 top-4 pointer-events-none'},
+          h('div',{className:'mut text-xs'},'Collected revenue · trailing 12 months'),
+          h('div',{className:'text-4xl font-semibold tn tracking-tight mt-1'},$k(rev12)),
+          h('div',{className:'flex gap-4 mt-2 text-[12px] flex-wrap'},
+            h('span',null,h('span',{className:'mut'},'Expenses '),$k(exp12)),
+            h('span',null,h('span',{className:'mut'},'Net profit '),$k(sum(K2.prof))))),
+        h('div',{className:'skyline-controls absolute right-4 top-4 flex gap-1.5 flex-wrap justify-end'},
+          [['plan','By plan'],['vs','Revenue / expenses'],['profit','Profit']].map(x=>h('button',{key:x[0],className:'chip !py-1 !px-3 text-xs','aria-pressed':hmode===x[0],onClick:()=>setHmode(x[0])},x[1]))),
+        h('div',{className:'skyline-help absolute left-5 bottom-3 mut text-[11px] pointer-events-none'},'Select a month to inspect transactions · Drag to rotate')),
+      h('div',{className:'grid grid-cols-2 xl:grid-cols-4 gap-3'},
+        Kc('Monthly recurring revenue',K2.mrr,$k,'since '+MO[5],mm,false,g6),
+        Kc('Revenue this month',K2.rev[11],$k,'vs '+MO[10],K2.rev,false,(K2.rev[11]-K2.rev[10])/(K2.rev[10]||1)*100),
+        Kc('Net profit',K2.prof[11],$k,'Margin '+pc(K2.prof[11]/(K2.rev[11]||1)*100),K2.prof,K2.prof[11]<0),
+        Kc('At-risk MRR',riskMrr,$k,K2.risk.length+' accounts need review',null,riskMrr>0)),
+      h('div',{className:'grid lg:grid-cols-12 gap-4 items-start'},
+        h('section',{className:'gl p-5 lg:col-span-7'},
+          h('div',{className:'flex items-start justify-between gap-3'},
+            h('div',null,h('h2',{className:'section-title'},'Revenue movement'),h('div',{className:'mut text-xs mt-1'},MO[a5]+' to '+MO[11]+' · Changes in recurring revenue')),
+            h('button',{className:'text-xs mut underline underline-offset-4 hover:text-[var(--fg)]',onClick:()=>go('rev')},'Explore revenue')),
+          h(Wf,{S:bridge,H:198})),
+        h('section',{className:'gl p-5 lg:col-span-5'},
+          h('div',{className:'flex justify-between gap-3 items-center mb-2'},h('h2',{className:'section-title'},'Needs attention'),
+            h('button',{className:'text-xs mut underline underline-offset-4 hover:text-[var(--fg)]',onClick:()=>go('ins')},'All insights')),
+          priorities.length?priorities.map(i=>h('div',{key:i.id,className:'signal-mini'},
+            h('div',{className:'flex gap-3 items-start'},h('span',{className:'signal-dot '+(i.id==='risk'||i.id==='inv'?'signal-urgent':'signal-growth')}),
+              h('div',{className:'min-w-0 flex-1'},h('div',{className:'font-medium text-sm'},i.t),h('p',{className:'mut text-xs mt-1 leading-relaxed'},i.w),
+                h('button',{className:'signal-link',onClick:()=>go(i.to)},i.a+' →'))))):h('div',{className:'mut text-sm py-6'},'No priority signals right now.'))),
+      h('section',{className:'gl operating-strip'},
+        [['Cash balance',$k(K2.cash),'Revenue'],['Open pipeline',$k(sum(D.ds.filter(d=>d.stage<4),d=>d.val)),'Customers'],['Active accounts',String(K2.act.length),'Customers']].map((x,i)=>h('button',{key:x[0],className:'operating-item',onClick:()=>go(i===0?'pf':i===1?'pl':'crm')},
+          h('span',{className:'mut text-xs'},x[0]),h('span',{className:'font-semibold tn text-lg'},x[1]),h('span',{className:'mut text-xs'},'Explore →'))))
+    );
+  };
   pgs.rev=()=>{const by=PL.map((p,i)=>({n:p[0],v:sum(K2.act.filter(c=>c.plan===i),c=>c.mrr)})),mx=Math.max(...by.map(x=>x.v)),rg=REG.map(r=>({n:r,v:sum(K2.act.filter(c=>c.reg===r),c=>c.mrr)})),mr=Math.max(...rg.map(x=>x.v)),ind=Object.entries(K2.act.reduce((o,c)=>({...o,[c.ind]:(o[c.ind]||0)+c.mrr}),{})).sort((a,b)=>b[1]-a[1]).slice(0,6);
     return h('div',{className:'pg space-y-4'},H1('Revenue'),h('div',{className:'gl grid grid-cols-2 lg:grid-cols-4'},Kpi('This month',$k(K2.rev[11]),dl(K2.rev[11],K2.rev[10])),Kpi('MRR',$k(K2.mrr),dl(mm[11],mm[10])),Kpi('12-month revenue',$k(sum(K2.rev)),'After '+$k(sum(K2.ref))+' refunds'),Kpi('Avg revenue per account',$k(K2.arpa),K2.act.length+' accounts')),
       h('div',{className:'grid lg:grid-cols-3 gap-3 items-start'},
@@ -358,7 +394,33 @@ function App(){
             h(Bar,{v:Math.max(0,K2.prof[11]),mx:K2.rev[11],c:'var(--positive)'}),
             h('div',{className:'font-semibold mt-2'},pc(K2.prof[11]/(K2.rev[11]||1)*100)))))),
       h('div',{className:'grid lg:grid-cols-3 gap-4 items-start'},[['By plan',by],['By region',rg],['By industry',ind.map(x=>({n:x[0],v:x[1]}))]].map(g=>h('div',{key:g[0],className:'gl p-5'},h('div',{className:'serif text-2xl mb-3'},g[0]),g[1].map(x=>h('div',{key:x.n,className:'py-2'},h('div',{className:'flex justify-between text-sm mb-1'},h('span',null,x.n),h('span',{className:'mut tn'},$k(x.v)+' · '+Math.round(x.v/K2.mrr*100)+'%')),h(Bar,{v:x.v,mx:Math.max(...g[1].map(y=>y.v))})))))))};
-  pgs.ins=()=>h('div',{className:'pg max-w-3xl'},H1('Insights'),h('div',{className:'mut mt-2'},'Rule-based analysis of this workspace: thresholds, variance checks and pipeline math. Every figure below is computed from your records.'),h('div',{className:'gl px-6 mt-4'},ins.map(insRow)));
+  pgs.ins=()=>{
+    const riskAmount=sum(K2.risk,c=>c.mrr),expAccounts=K2.act.filter(c=>c.health>=80&&c.plan<3),
+      upside=sum(expAccounts,c=>PL[c.plan+1][1]-c.mrr),invoices=sum(K2.pend,x=>x.amt),
+      ordered=[...ins].sort((x,y)=>({risk:0,inv:1,an:2,gm:3,exp:4,pl:5}[x.id]??6)-({risk:0,inv:1,an:2,gm:3,exp:4,pl:5}[y.id]??6)),
+      kind=id=>id==='risk'||id==='inv'||id==='gm'?'Attention':id==='an'?'Variance':id==='exp'?'Opportunity':'Pipeline';
+    return h('div',{className:'pg space-y-4'},
+      H1('Intelligence',h('span',{className:'mut text-xs'},ins.length+' active signals'),'Prioritized financial signals calculated from your workspace records.'),
+      h('div',{className:'grid grid-cols-1 sm:grid-cols-3 gap-3'},
+        h('div',{className:'gl intelligence-stat'},h('div',{className:'mut text-xs'},'Revenue exposed'),h('div',{className:'intelligence-value red tn'},$k(riskAmount)),h('div',{className:'mut text-xs mt-2'},K2.risk.length+' at-risk accounts')),
+        h('div',{className:'gl intelligence-stat'},h('div',{className:'mut text-xs'},'Expansion opportunity'),h('div',{className:'intelligence-value tn'},$k(upside)),h('div',{className:'mut text-xs mt-2'},expAccounts.length+' qualifying accounts')),
+        h('div',{className:'gl intelligence-stat'},h('div',{className:'mut text-xs'},'Uncollected invoices'),h('div',{className:'intelligence-value tn'},$k(invoices)),h('div',{className:'mut text-xs mt-2'},K2.pend.length+' pending payments'))),
+      h('div',{className:'flex flex-wrap justify-between items-end gap-3 pt-2'},
+        h('div',null,h('h2',{className:'section-title'},'Priority signals'),h('div',{className:'mut text-xs mt-1'},'Understand the impact before taking action.')),
+        h('span',{className:'mut text-xs'},'Updated from local records')),
+      h('div',{className:'grid md:grid-cols-2 gap-3'},
+        ordered.map((i,idx)=>h('article',{key:i.id,className:'gl insight-card'},
+          h('div',{className:'flex items-center justify-between gap-3'},
+            h('span',{className:'insight-category '+(kind(i.id)==='Attention'?'insight-attention':'')},kind(i.id)),
+            h('span',{className:'mut text-[11px]'},String(idx+1).padStart(2,'0'))),
+          h('h3',{className:'insight-title'},i.t),
+          h('p',{className:'mut text-[13px] leading-relaxed mt-2'},i.w),
+          h('div',{className:'flex flex-wrap gap-2 mt-auto pt-5 items-center'},
+            h('button',{className:'btn g text-xs',onClick:()=>go(i.to)},i.a+' →'),
+            (i.id==='risk'||i.id==='exp')&&h('button',{className:'text-xs mut underline underline-offset-4 hover:text-[var(--fg)] px-2',onClick:()=>apply(i)},i.id==='risk'?'Simulate follow-ups':'Simulate upgrades'))))),
+      h('div',{className:'mut text-xs leading-relaxed pb-5'},'Actions change only this browser workspace. Bulk follow-ups and upgrades require confirmation before changing health scores, plans or MRR.')
+    );
+  };
   pgs.fc=()=>{const a=D.as,net=1+(a.g-a.c+a.e)/100,proj=Array.from({length:13},(_,k)=>K2.mrr*Math.pow(net,k)),S=[{n:'MRR',d:[...K2.mrrS,...Array(12).fill(null)],c:'var(--fg)',fill:1},{n:'Projected',d:[...Array(11).fill(null),K2.mrr,...proj.slice(1)],c:'var(--revenue)',dash:'5 4'}],L2=[...MO,...Array.from({length:12},(_,i)=>new Date(NOW.getFullYear(),NOW.getMonth()+1+i,1).toLocaleString('en',{month:'short'}))],set=p=>setD(d=>({...d,as:{...d.as,...p}})),done=()=>up(d=>d,'Forecast assumptions updated');
     const sl=(k,l,mx)=>h('div',{key:k,className:'py-3'},h('div',{className:'flex justify-between mb-1'},h('label',{htmlFor:'s'+k},l),h('span',{className:'tn'},a[k].toFixed(1)+'% / mo')),h('input',{id:'s'+k,type:'range',min:0,max:mx,step:.1,value:a[k],className:'w-full !p-0 !border-0',onChange:e=>set({[k]:+e.target.value}),onPointerUp:done,onKeyUp:done}));
     return h('div',{className:'pg space-y-4'},H1('Forecasting',['Bear','Base','Bull'].map((n,i)=>h('button',{key:n,className:'chip',onClick:()=>{set([{g:1.5,c:3,e:.5},{g:4,c:1.8,e:1.2},{g:7,c:1.2,e:2}][i]);done()}},n))),
@@ -446,15 +508,64 @@ function App(){
           Card('Sync history','All services',all.length?h('ul',null,all.map((x,i)=>h('li',{key:i,className:'flex justify-between py-2 border-t hair first:border-0 text-[13px]'},h('span',{className:x.ok?'':'red'},(x.ok?'✓ ':'✗ ')+IGS.find(e=>e[0]===x.id)[1]),h('span',{className:'mut'},mAgo(x.ts))))):h('div',{className:'mut py-4 text-center text-[13px]'},'No syncs yet.')))))};
   const mem=D.team,roles=['Owner','Admin','Finance','Sales','Viewer'],INT=['Stripe','QuickBooks','HubSpot','Salesforce','Slack','Google Ads'];
   const sT=nav==='team'?'team':nav==='int'?'int':stab,INTD={Stripe:'Sync payments, refunds and subscriptions',QuickBooks:'Post invoices and expenses to the ledger',HubSpot:'Two-way sync of contacts and deals',Salesforce:'Sync accounts and opportunities',Slack:'Send alerts and workflow notices',"Google Ads":'Import campaign spend and leads'};
-  pgs.st=()=>h('div',{className:'pg max-w-3xl'},H1(nav==='team'?'Team and access':nav==='int'?'Integrations':'Settings'),h('div',{className:'flex gap-2 my-4 flex-wrap',style:{display:nav==='st'?'flex':'none'}},[['workspace','Workspace'],['audit','Audit log'],['look','Appearance']].map(x=>h('button',{key:x[0],className:'chip','aria-pressed':stab===x[0],onClick:()=>setStab(x[0])},x[1]))),
-    h('div',{className:'gl p-6'},
-      sT==='workspace'&&h('div',{className:'space-y-4'},h('div',null,h('label',{htmlFor:'wn',className:'mut text-xs block mb-1'},'Workspace name'),h('input',{id:'wn',value:D.ws.name,className:'w-full',onChange:e=>setD(d=>({...d,ws:{...d.ws,name:e.target.value}}))})),h('div',null,h('label',{htmlFor:'cur',className:'mut text-xs block mb-1'},'Currency'),h('select',{id:'cur',value:D.ws.cur,onChange:e=>setD(d=>({...d,ws:{...d.ws,cur:e.target.value}}))},['USD','EUR','GBP'].map(c=>h('option',{key:c},c)))),h('div',{className:'mut text-xs'},'Figures are formatted in dollars. Changes save automatically.'),bt('Reset workspace data',()=>{setD({...seed(),nav:'st'});flash('Workspace reset')},'g')),
-      sT==='team'&&h('div',null,mem.map((m,i)=>h('div',{key:m[0],className:'flex items-center gap-3 py-3 border-b hair last:border-0'},h('span',{className:'flex-1'},m[0]),h('select',{'aria-label':'Role for '+m[0],value:m[1],disabled:m[1]==='Owner',onChange:e=>up(d=>({...d,team:d.team.map((x,j)=>j===i?[x[0],e.target.value]:x)}),m[0]+' role set to '+e.target.value)},roles.filter(r=>r!=='Owner'||m[1]==='Owner').map(r=>h('option',{key:r},r))),m[1]!=='Owner'&&bt('Remove',()=>up(d=>({...d,team:d.team.filter((_,j)=>j!==i)}),m[0]+' removed'),'g'))),
-        h('form',{className:'flex gap-2 mt-4 flex-wrap',onSubmit:e=>{e.preventDefault();if(!nt.trim())return;up(d=>({...d,team:[...d.team,[nt.trim(),'Viewer']]}),nt.trim()+' invited as Viewer');setNt('')}},h('input',{value:nt,onChange:e=>setNt(e.target.value),'aria-label':'Member name',placeholder:'Member name',className:'flex-1'}),h('button',{className:'btn',type:'submit'},'Add member')),h('div',{className:'mt-6'},h('div',{className:'font-semibold mb-2'},'Role permissions'),h('table',{className:'w-full text-[13px]'},th(['Role','Settings','Finance','Pipeline','Export']),h('tbody',null,[['Owner',1,1,1,1],['Admin',1,1,1,1],['Finance',0,1,0,1],['Sales',0,0,1,1],['Viewer',0,0,0,0]].map(r=>h('tr',{key:r[0],className:'border-t hair'},h('td',{className:'px-4 py-2'},r[0]),r.slice(1).map((v,i)=>h('td',{key:i,className:'px-4 '+(v?'':'mut')},v?'Yes':'No')))))))),
-      sT==='audit'&&h('ul',null,D.log.map((l,i)=>h('li',{key:i,className:'flex gap-4 py-2.5 border-b hair last:border-0'},h('span',{className:'mut w-36 text-xs flex-none pt-0.5'},new Date(l.ts).toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})),h('span',null,l.m)))),
-      sT==='int'&&h('div',null,h('div',{className:'mut text-xs mb-3'},'No external service is connected. Live connections need server-side credentials that this workspace does not have yet. You can mark which ones you want set up.'),INT.map(n=>{const s=D.int[n];return h('div',{key:n,className:'flex items-center gap-3 py-3 border-b hair last:border-0'},h('span',{className:'flex-1'},h('div',null,n),h('div',{className:'mut text-xs'},INTD[n])),h('span',{className:'mut text-sm'},s?'Setup requested':'Not connected'),s?bt('Cancel request',()=>up(d=>{const i={...d.int};delete i[n];return{...d,int:i}},n+' setup request cancelled'),'g'):bt('Request setup',()=>up(d=>({...d,int:{...d.int,[n]:1}}),n+' setup requested'),'g'))})),
-      sT==='look'&&h('div',{className:'space-y-4'},h('div',{className:'flex items-center justify-between'},h('span',null,'Theme'),h('div',{className:'flex gap-2'},['system','dark','light'].map(t=>h('button',{key:t,className:'chip','aria-pressed':D.theme===t,onClick:()=>setD(d=>({...d,theme:t}))},t[0].toUpperCase()+t.slice(1))))),h('div',{className:'flex items-center justify-between'},h('span',null,'3D quality'),h('div',{className:'flex gap-2'},['high','low'].map(t=>h('button',{key:t,className:'chip','aria-pressed':qual===t,onClick:()=>setQual(t)},t[0].toUpperCase()+t.slice(1))))))));
-  pgs.team=pgs.st;
+  pgs.st=()=>{
+    const section=nav==='team'?'team':nav==='appearance'?'look':nav==='audit'?'audit':'workspace';
+    return h('div',{className:'pg settings-page space-y-4'},
+      H1('Settings',null,'Manage this browser workspace, appearance and access previews.'),
+      section==='workspace'&&h('section',{className:'gl settings-surface'},
+        h('h2',{className:'section-title'},'Workspace preferences'),
+        h('p',{className:'page-subtitle !mt-1'},'Name and reporting conventions for this sample workspace.'),
+        h('div',{className:'settings-field'},
+          h('label',{htmlFor:'wn',className:'text-sm font-medium'},'Workspace name'),
+          h('p',{className:'mut text-xs'},'Displayed throughout the dashboard.'),
+          h('input',{id:'wn',value:D.ws.name,className:'mt-3 w-full max-w-sm',onChange:e=>setD(d=>({...d,ws:{...d.ws,name:e.target.value}}))})),
+        h('div',{className:'settings-field'},
+          h('div',{className:'text-sm font-medium'},'Reporting currency'),
+          h('p',{className:'mut text-xs mt-1'},'USD · Financial records are denominated in US dollars. Currency conversion is not simulated.')),
+        h('div',{className:'settings-danger'},
+          h('div',null,h('div',{className:'font-medium'},'Reset local workspace'),
+            h('p',{className:'mut text-xs mt-1 max-w-xl'},'Restore the starting sample records and undo local edits in this browser.')),
+          h('button',{className:'btn g text-xs',onClick:()=>{
+            if(!window.confirm('Reset this local workspace to its original sample records? This will overwrite your edits in this browser.'))return;
+            setD({...seed(),nav:'st'});flash('Workspace restored to initial data');
+          }},'Reset sample data'))),
+      section==='team'&&h('section',{className:'gl settings-surface'},
+        h('h2',{className:'section-title'},'Team & access'),
+        h('p',{className:'page-subtitle !mt-1'},'Preview team roles. This browser simulation has no authentication or enforced access controls.'),
+        h('div',{className:'mt-5'},mem.map((m,i)=>h('div',{key:m[0],className:'flex items-center gap-3 py-3 border-t hair flex-wrap'},
+          h('span',{className:'flex-1 min-w-[135px]'},m[0]),
+          h('select',{'aria-label':'Role for '+m[0],value:m[1],disabled:m[1]==='Owner',onChange:e=>up(d=>({...d,team:d.team.map((x,j)=>j===i?[x[0],e.target.value]:x)}),m[0]+' role set to '+e.target.value)},
+            roles.filter(r=>r!=='Owner'||m[1]==='Owner').map(r=>h('option',{key:r},r))),
+          m[1]!=='Owner'&&bt('Remove',()=>up(d=>({...d,team:d.team.filter((_,j)=>j!==i)}),m[0]+' removed'),'g')))),
+        h('form',{className:'flex gap-2 mt-5 flex-wrap',onSubmit:e=>{
+          e.preventDefault();if(!nt.trim())return;up(d=>({...d,team:[...d.team,[nt.trim(),'Viewer']]}),nt.trim()+' added as Viewer');setNt('');
+        }},
+          h('input',{value:nt,onChange:e=>setNt(e.target.value),'aria-label':'Member name',placeholder:'Member name',className:'flex-1 max-w-sm'}),
+          h('button',{className:'btn',type:'submit'},'Add member')),
+        h('div',{className:'mt-7'},
+          h('div',{className:'font-medium mb-2'},'Role permissions (reference)'),
+          h('div',{className:'overflow-x-auto'},h('table',{className:'w-full text-[13px] min-w-[570px]'},th(['Role','Settings','Finance','Pipeline','Export']),
+            h('tbody',null,[['Owner',1,1,1,1],['Admin',1,1,1,1],['Finance',0,1,0,1],['Sales',0,0,1,1],['Viewer',0,0,0,0]].map(r=>h('tr',{key:r[0],className:'border-t hair'},
+              h('td',{className:'px-4 py-2'},r[0]),r.slice(1).map((v,i)=>h('td',{key:i,className:'px-4 '+(v?'':'mut')},v?'Yes':'No'))))))))),
+      section==='look'&&h('section',{className:'gl settings-surface'},
+        h('h2',{className:'section-title'},'Appearance'),
+        h('p',{className:'page-subtitle !mt-1'},'Choose how RevenueOS looks and how much 3D detail to render.'),
+        h('div',{className:'settings-choice-row'},h('div',null,h('div',{className:'font-medium text-sm'},'Theme'),
+          h('div',{className:'mut text-xs mt-1'},'Use system preferences or override them.')),
+          h('div',{className:'flex gap-2 flex-wrap'},['system','dark','light'].map(t=>h('button',{key:t,className:'chip','aria-pressed':D.theme===t,onClick:()=>setD(d=>({...d,theme:t}))},t[0].toUpperCase()+t.slice(1))))),
+        h('div',{className:'settings-choice-row'},h('div',null,h('div',{className:'font-medium text-sm'},'3D quality'),
+          h('div',{className:'mut text-xs mt-1'},'Low reduces GPU work on slower devices.')),
+          h('div',{className:'flex gap-2'},['high','low'].map(t=>h('button',{key:t,className:'chip','aria-pressed':qual===t,onClick:()=>setQual(t)},t[0].toUpperCase()+t.slice(1)))))),
+      section==='audit'&&h('section',{className:'gl settings-surface'},
+        h('h2',{className:'section-title'},'Activity log'),
+        h('p',{className:'page-subtitle !mt-1'},'Local changes recorded in this browser, most recent first.'),
+        h('ul',{className:'mt-5'},D.log.map((l,i)=>h('li',{key:i,className:'flex flex-wrap gap-4 py-3 border-t hair'},
+          h('span',{className:'mut w-40 text-xs flex-none pt-0.5'},new Date(l.ts).toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})),
+          h('span',{className:'text-sm'},l.m)))),
+        D.log.length<=1&&h('div',{className:'mut text-xs border-t hair py-4'},'Updates to customers, deals and transactions will appear here as you use the workspace.'))
+    );
+  };
+  pgs.team=pgs.st;pgs.appearance=pgs.st;pgs.audit=pgs.st;
   /* forms and overlays */
   const Form=()=>{if(!fm)return null;const sub=e=>{e.preventDefault();const f=new FormData(e.target),g=k=>f.get(k);
       if(fm==='cust'){const nm=g('name').trim(),p=+g('plan');if(!nm)return;up(d=>({...d,cs:[...d.cs,{id:'c'+Date.now(),name:nm,ind:g('ind')||'Other',reg:g('reg'),own:g('own'),contact:g('contact')||'—',plan:p,mrr:PL[p][1],start:11,ch:null,health:75,notes:[]}]}),'Account added: '+nm)}
@@ -483,18 +594,23 @@ function App(){
       h('form',{className:'mt-6 flex gap-2',onSubmit:e=>{e.preventDefault();const v=e.target.elements.n.value.trim();if(v){note(c.id,v);e.target.reset()}}},h('label',{htmlFor:'nn',className:'sr-only'},'Add note'),h('input',{id:'nn',name:'n',placeholder:'Add a note',className:'flex-1'}),h('button',{className:'btn',type:'submit'},'Add')),
       h('ul',{className:'mt-4'},c.notes.length?c.notes.map((n,i)=>h('li',{key:i,className:'py-3 border-t hair'},h('div',null,n.m),h('div',{className:'mut text-xs'},new Date(n.ts).toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})))):h('li',{className:'mut py-3 border-t hair'},'No interactions yet.'))))};
   const cmds=[...FLAT.map(p=>({l:'Go to '+p[1],f:()=>go(p[0])})),...D.cs.map(c=>({l:'Open '+c.name,f:()=>{setCid(c.id);setPal(false)}})),{l:'Download executive PDF',f:()=>{setPal(false);expPdf()}},{l:'Export transactions CSV',f:()=>{setPal(false);expTx()}}].filter(c=>c.l.toLowerCase().includes(pq.toLowerCase())).slice(0,9);
-  return h('div',{className:'flex h-full relative'},h('div',{id:'aurora','aria-hidden':true}),h(Ambient,{q:qual==='low'?'off':'on'}),
+  return h('div',{className:'flex h-full relative'},h('div',{id:'aurora','aria-hidden':true}),h(Ambient,{q:nav==='cc'&&qual==='high'?'on':'off'}),
     h('aside',{className:'flex-none m-2 mr-0 flex-col hidden md:flex relative z-10 gl',style:{width:D.col?64:224,transition:'width .3s cubic-bezier(.2,.8,.2,1)',borderRadius:20}},
       h('div',{className:'flex items-center gap-2 px-3 pt-3 pb-2'},h('span',{className:'w-7 h-7 rounded-lg flex-none',style:{background:'#e5484d',boxShadow:'0 0 14px -8px rgba(229,72,77,.6)'}}),!D.col&&h('span',{className:'font-semibold tracking-tight flex-1'},'RevenueOS'),h('button',{className:'nav !w-auto !p-1.5','aria-label':D.col?'Expand sidebar':'Collapse sidebar',title:D.col?'Expand':'Collapse',onClick:()=>setD(d=>({...d,col:!d.col}))},h(Ic,{d:IC.menu,s:16}))),
-      !D.col&&h('button',{className:'mx-2 mb-2 flex items-center gap-2 px-3 py-1.5 rounded-lg border hair mut text-xs cursor-pointer hover:text-[var(--fg)]',onClick:()=>{setPal(true);setPq('');setPi(0)}},h(Ic,{d:IC.search,s:14}),h('span',{className:'flex-1 text-left'},'Search'),h('kbd',{className:'text-[10px] border hair rounded px-1'},'⌘K')),
-      h('nav',{className:'flex-1 overflow-y-auto px-2 pb-2',style:{scrollbarWidth:'thin'},'aria-label':'Main'},PAGES.map(g=>{const bd={ret:K2.risk.length,pl:D.ds.filter(d=>d.stage<4).length,tx:K2.pend.length},open=!(D.gc||{})[g[0]]||g[1].some(p=>p[0]===nav);return h('div',{key:g[0],className:'mb-1'},
-        !D.col?h('button',{className:'flex w-full items-center justify-between px-3 py-1.5 text-[11px] mut cursor-pointer hover:text-[var(--fg)]','aria-expanded':open,onClick:()=>setD(d=>({...d,gc:{...(d.gc||{}),[g[0]]:open}}))},g[0],h('span',{style:{display:'inline-flex',transform:open?'none':'rotate(-90deg)',transition:'transform .2s'}},h(Ic,{d:'M6 9l6 6 6-6',s:12}))):h('div',{className:'my-2 mx-3 border-t hair'}),
-        (open||D.col)&&g[1].map(p=>h('button',{key:p[0],className:'nav !py-1.5 text-[13px]',title:p[1],'aria-current':nav===p[0]?'page':undefined,onClick:()=>go(p[0])},h(Ic,{d:IC[p[0]],s:16}),!D.col&&h('span',{className:'flex-1'},p[1]),!D.col&&bd[p[0]]>0&&h('span',{className:'text-[10px] px-1.5 rounded-full',style:{background:p[0]==='ret'?'rgba(255,106,92,.2)':'var(--hv)',color:p[0]==='ret'?'#ff8a7c':'var(--mut)'}},bd[p[0]]))))})),
-      h('div',{className:'p-3 border-t hair flex items-center gap-2'},h('span',{className:'w-7 h-7 rounded-full flex-none flex items-center justify-center text-[11px] font-semibold',style:{background:'linear-gradient(135deg,#f3eee3,#d9b59a)',color:'#141210'}},D.ws.name.slice(0,2).toUpperCase()),!D.col&&h('div',{className:'min-w-0'},h('div',{className:'text-[13px] truncate'},D.ws.name),h('div',{className:'text-[11px] mut'},'Sample data')))),
+      h('nav',{className:'flex-1 overflow-y-auto px-2 pb-2 mt-2',style:{scrollbarWidth:'thin'},'aria-label':'Main navigation'},
+        PAGES.map((g,i)=>{
+          const active=g[1].some(p=>p[0]===nav),dest=g[1][0][0];
+          return h('button',{key:g[0],type:'button',className:'nav nav-primary'+(active?' is-active':''),'aria-current':active?'page':undefined,title:g[0],onClick:()=>go(dest)},
+            h(Ic,{d:IC[PRIMARY_ICONS[i]],s:18}),!D.col&&h('span',{className:'flex-1'},g[0]));
+        })),
+      h('div',{className:'p-3 border-t hair flex items-center gap-2'},h('span',{className:'w-7 h-7 rounded-full flex-none flex items-center justify-center text-[11px] font-semibold',style:{background:'linear-gradient(135deg,#f3eee3,#d9b59a)',color:'#141210'}},D.ws.name.slice(0,2).toUpperCase()),!D.col&&h('div',{className:'min-w-0'},h('div',{className:'text-[13px] truncate'},D.ws.name),h('div',{className:'text-[11px] mut'},'Local workspace')))),
     h('div',{className:'flex-1 min-w-0 flex flex-col relative z-10'},
       h('div',{className:'flex items-center gap-3 px-4 md:px-5 py-3'},h('select',{className:'md:hidden','aria-label':'Page',value:nav,onChange:e=>go(e.target.value)},FLAT.map(p=>h('option',{key:p[0],value:p[0]},p[1]))),
-        h('button',{className:'gl flex items-center gap-3 px-4 py-2 mut cursor-pointer flex-1 max-w-md',style:{borderRadius:12},onClick:()=>{setPal(true);setPq('');setPi(0)}},h(Ic,{d:IC.search,s:16}),h('span',{className:'flex-1 text-left hidden sm:inline'},'Search or jump to…'),h('span',{className:'flex-1 text-left sm:hidden'},'Search'),h('kbd',{className:'text-xs border hair rounded px-1.5'},'⌘K')),h('span',{className:'flex-1'}),h('span',{className:'mut hidden sm:block'},$k(K2.mrr)+' MRR')),
-      h('main',{className:'flex-1 overflow-y-auto px-4 md:px-5 pb-10'},(pgs[nav]||pgs.cc)())),
+        h('button',{className:'gl flex items-center gap-3 px-4 py-2 mut cursor-pointer flex-1 max-w-md',style:{borderRadius:12},onClick:()=>{setPal(true);setPq('');setPi(0)}},h(Ic,{d:IC.search,s:16}),h('span',{className:'flex-1 text-left hidden sm:inline'},'Search or jump to…'),h('span',{className:'flex-1 text-left sm:hidden'},'Search'),h('kbd',{className:'text-xs border hair rounded px-1.5'},'⌘K')),h('span',{className:'flex-1'}),h('span',{className:'header-mrr hidden sm:block'},h('span',{className:'mut'},'CURRENT MRR'),h('strong',{className:'tn'},$k(K2.mrr)))),
+      h('main',{ref:mainRef,className:'flex-1 overflow-y-auto px-4 md:px-5 pb-10'},
+        navContext(nav)[1].length>1&&h('nav',{className:'context-tabs','aria-label':navContext(nav)[0]+' sections'},
+          navContext(nav)[1].map(p=>h('button',{key:p[0],className:'context-tab','aria-current':nav===p[0]?'page':undefined,onClick:()=>go(p[0])},p[1]))),
+        (pgs[nav]||pgs.cc)())),
     Form(),Drawer(),IgModal(),
     pal&&h('div',{className:'fixed inset-0 z-50 flex items-start justify-center pt-[14vh] px-4',style:{background:'rgba(0,0,0,.5)'},onMouseDown:e=>{if(e.target===e.currentTarget)setPal(false)}},h('div',{className:'gl pop w-full max-w-xl overflow-hidden',role:'dialog','aria-label':'Command palette'},h('input',{autoFocus:true,value:pq,onChange:e=>{setPq(e.target.value);setPi(0)},'aria-label':'Command',placeholder:'Jump to a page, open an account, export…',className:'w-full !border-0 !rounded-none border-b hair px-5 py-4 text-base',onKeyDown:e=>{if(e.key==='ArrowDown'){e.preventDefault();setPi((pi+1)%Math.max(cmds.length,1))}if(e.key==='ArrowUp'){e.preventDefault();setPi((pi-1+cmds.length)%Math.max(cmds.length,1))}if(e.key==='Enter'&&cmds[pi])cmds[pi].f()}}),h('ul',{className:'max-h-80 overflow-y-auto p-2',role:'listbox'},cmds.length?cmds.map((c,i)=>h('li',{key:c.l,role:'option','aria-selected':i===pi,className:'px-4 py-3 rounded-lg cursor-pointer',style:{background:i===pi?'var(--hv)':'none'},onMouseEnter:()=>setPi(i),onClick:c.f},c.l)):h('li',{className:'mut p-6 text-center'},'Nothing matches.')))),
     h('div',{className:'fixed bottom-5 inset-x-0 flex justify-center pointer-events-none z-[60]','aria-live':'polite'},toast&&h('div',{className:'gl pop px-5 py-3 pointer-events-auto'},toast)));

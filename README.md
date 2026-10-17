@@ -44,3 +44,24 @@ git branch -M main
 git remote add origin https://github.com/zoeyzb/saas.git
 git push -u origin main
 ```
+
+## Navigation & visual UX
+
+The desktop sidebar offers six primary destinations: **Command Center, Revenue,
+Customers, Intelligence, Operations, Settings**. Related legacy screens are
+reached using in-page contextual tabs. All existing hash-route URLs remain
+supported, including `#/sub`, `#/pf`, `#/pl`, and `#/tx`.
+
+The Command Center focuses on the interactive 3D revenue visualization, four
+decision-useful KPIs, a recurring-revenue bridge and priority signals. The
+Intelligence page groups locally computed attention signals, cash collection,
+expansion opportunities and pipeline estimates. Simulated bulk follow-ups and
+subscription upgrades ask for confirmation.
+
+Settings exposes Workspace, Team & access, Appearance and Audit log. Currency
+remains USD because the sample financial data is denominated in USD; no
+unsupported currency conversion is offered. Workspace reset requires consent.
+All interactions remain browser-local; external integration actions are
+simulated rather than connected to third-party services.
+
+See `docs/UX_REDESIGN_SPEC.md` for design decisions and acceptance criteria.
