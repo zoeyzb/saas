@@ -111,6 +111,29 @@ const submit=(tree,vals)=>{const f=find(tree,n=>n.t==='form'&&n.p.role==='dialog
   tree=click(tree,'Export CSV');await wait(30);ok(blobs.length===1&&(await blobs[0].text()).includes('"Date","Type"'),'CSV export produces a file');
   // 7. retention, insights actions
   tree=goPage(tree,'Retention');let h0=X.sum(D().cs,c=>c.health);tree=click(tree,'Log call');ok(X.sum(D().cs,c=>c.health)>h0,'log call raises health');
+  // 7b. Intelligence evidence is sourced from current records, not invented descriptions.
+  tree=goPage(tree,'Intelligence');
+  let evidenceBtns=find(tree,n=>n.t==='button'&&txt(n)==='Inspect evidence +');
+  ok(evidenceBtns.length>0,'Intelligence offers detailed evidence');
+  const riskCard=find(tree,n=>n.t==='article'&&typeof n.p.className==='string'&&n.p.className.includes('insight-card')&&txt(n).includes('MRR is at risk'))[0];
+  if(riskCard){
+    const opener=find(riskCard,n=>n.t==='button'&&txt(n)==='Inspect evidence +')[0];
+    opener.p.onClick({});tree=render();
+    ok(txt(tree).includes('Live account health · scored below 50'),'risk evidence identifies live criteria');
+    const opened=find(tree,n=>n.t==='button'&&txt(n)==='Maple Street Foods ↗')[0];
+    ok(!!opened,'risk evidence includes actual affected customer');
+    if(opened){opened.p.onClick({});tree=render();ok(!!find(tree,n=>n.p&&n.p.role==='dialog'&&n.p['aria-label']==='Maple Street Foods').length,'risk record opens existing customer detail drawer');}
+  }
+  tree=goPage(tree,'Intelligence');
+  const invoiceCard=find(tree,n=>n.t==='article'&&typeof n.p.className==='string'&&n.p.className.includes('insight-card')&&txt(n).includes('unpaid invoices'))[0];
+  if(invoiceCard){
+    const invBtn=find(invoiceCard,n=>n.t==='button'&&txt(n)==='Inspect evidence +')[0];
+    invBtn.p.onClick({});tree=render();
+    ok(txt(tree).includes('Pending invoices · existing local transaction records'),'invoice evidence uses local transactions');
+    const invoiceAction=find(tree,n=>n.t==='section'&&n.p.className==='signal-evidence')[0];
+    const recordButton=find(invoiceAction,n=>n.t==='button'&&txt(n).includes('↗'))[0];
+    if(recordButton){recordButton.p.onClick({});tree=render();ok(D().nav==='tx'&&txt(tree).includes('Pending'),'invoice evidence deep-links to filtered transactions');}
+  }
   tree=goPage(tree,'Intelligence');m0=K().mrr;const up=btn(tree,'Simulate upgrades')[0];if(up){up.p.onClick({});tree=render();ok(K().mrr>m0,'confirmed local upgrade simulation raises MRR')}
   // 8. marketing and automations
   tree=goPage(tree,'Marketing');tree=click(tree,'Pause');ok(D().mk[0].on===false,'campaign pause');

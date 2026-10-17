@@ -379,9 +379,13 @@ function Skyline({rp,ex,pr,fc,L,mode,onBar,q}){
   return h('div',{className:'skyline-stage'},
     h('div',{className:'skyline-plot',ref,role:'img','aria-label':'Interactive 3D revenue columns; select a month for transactions'}),
     h('div',{className:'skyline-timeline',style:{gridTemplateColumns:`repeat(${cols},minmax(0,1fr))`}},months.map((m,i)=>h('button',{key:i,type:'button',className:'skyline-month '+(i>=12?'skyline-month-future':''),'aria-label':m+(i>=12?' forecast':' transactions'),title:m,onClick:()=>onBar(i,i>=12)},m))),
-    h('div',{className:'skyline-legend'},
-      h('span',null,h('i',{className:'skyline-dot skyline-ivory'}),isProfit?'Profit / loss':mode==='vs'?'Revenue':'Collected revenue'),
-      h('span',null,h('i',{className:'skyline-dot '+(mode==='vs'?'skyline-forecast':'skyline-coral')}),isProfit?'Loss':mode==='vs'?'Expenses':'Expense markers'),
+    h('div',{className:'skyline-legend'+(mode==='plan'?' skyline-legend-plan':'')},
+      mode==='plan'?
+        [h('span',{key:'compact',className:'skyline-mobile-title'},h('i',{className:'skyline-dot skyline-ivory'}),'Revenue by plan'),
+         ...['Starter','Growth','Scale','Enterprise'].map((name,i)=>h('span',{key:name,className:'skyline-plan-entry'},
+           h('i',{className:'skyline-dot',style:{background:['#605b56','#867568','#af917b','#d4b79a'][i]}}),name))]:
+        h('span',null,h('i',{className:'skyline-dot skyline-ivory'}),isProfit?'Profit / loss':'Revenue'),
+      h('span',null,h('i',{className:'skyline-dot skyline-coral'}),isProfit?'Loss':mode==='vs'?'Expenses':'Expense markers'),
       !isProfit&&h('span',null,h('i',{className:'skyline-dot skyline-forecast'}),'Forecast')),
     tip&&h('div',{className:'skyline-tooltip pop',style:{left:Math.min(Math.max(4,tip.x+10),(ref.current?.clientWidth||900)-174),top:Math.min(Math.max(0,tip.y-76),(ref.current?.clientHeight||260)-90)}},
       h('strong',null,months[tip.m]+(tip.f?' · Forecast':' · Actual')),
@@ -393,8 +397,15 @@ function Skyline({rp,ex,pr,fc,L,mode,onBar,q}){
 }
 
 const Sp=({d,c='var(--fg)',w=72,hh=24})=>{const mn=Math.min(...d),mx=Math.max(...d);return h('svg',{width:w,height:hh,'aria-hidden':true},h('polyline',{fill:'none',stroke:c,strokeWidth:1.5,strokeLinejoin:'round',points:d.map((v,i)=>(i/(d.length-1)*w).toFixed(1)+','+(hh-2-(v-mn)/(mx-mn||1)*(hh-4)).toFixed(1)).join(' ')}))};
-const Card=(t,s,ch,r)=>h('div',{className:'gl p-4 min-w-0 h-full flex flex-col'},h('div',{className:'flex items-start justify-between gap-2 mb-3'},h('div',null,h('div',{className:'font-semibold tracking-tight'},t),s&&h('div',{className:'mut text-xs mt-0.5'},s)),r),h('div',{className:'flex-1 min-h-0'},ch));
-const KS=a=>h('div',{className:'gl grid grid-cols-2 lg:grid-cols-'+a.length},a.map((x,i)=>h('div',{key:x[0],className:'p-4 '+(i?'lg:border-l hair':'')+(i%2?' border-l hair lg:border-l':'')},h('div',{className:'mut text-xs'},x[0]),h('div',{className:'text-xl font-semibold tn mt-1 tracking-tight '+(x[3]?'red':'')},x[1]),h('div',{className:'mut text-xs mt-1'},x[2]))));
+const Card=(t,s,ch,r)=>h('section',{className:'gl shared-card min-w-0 flex flex-col'},
+  h('div',{className:'flex items-start justify-between gap-3 mb-4'},
+    h('div',null,h('h2',{className:'shared-card-heading'},t),s&&h('p',{className:'mut text-xs mt-1 leading-relaxed'},s)),r),
+  h('div',{className:'min-w-0'},ch));
+const KS=a=>h('section',{className:'gl metric-strip','aria-label':'Key metrics'},
+  a.map(x=>h('div',{key:x[0],className:'metric-strip-item'},
+    h('div',{className:'mut text-xs'},x[0]),
+    h('div',{className:'text-2xl font-semibold tn mt-2 tracking-tight '+(x[3]?'red':'')},x[1]),
+    h('div',{className:'mut text-xs mt-1'},x[2]))));
 function Wf({S,H=210}){const id=useId().replace(/:/g,''),[hi,setHi]=useState(null),W=460,pl=44,n=S.length,bw=(W-pl-8)/n;let run=0;const bars=S.map(s=>{const a=s.t==='total'?0:run,b=s.t==='total'?s.v:run+s.v;run=s.t==='total'?s.v:run+s.v;return{...s,lo:Math.min(a,b),hi:Math.max(a,b)}}),mx=Math.max(...bars.map(b=>b.hi),1)*1.12,mn=Math.min(0,...bars.map(b=>b.lo))*1.15,Y=v=>16+(mx-v)/(mx-mn||1)*(H-44),dx=6,dy=-4,tk=[0,1,2,3].map(k=>mn+(mx-mn)*k/3);
   const pal=b=>b.t==='total'?['#ead4bd','#9d806b','#f1e3d1','#6c5545']:b.v>=0?['#adc8a9','#63886e','#d0e0cc','#45624c']:['#f18c90','#ab3239','#ffb2b5','#782127'];
   return h('svg',{viewBox:'0 0 '+W+' '+H,className:'w-full',role:'img','aria-label':'Bridge chart',onMouseLeave:()=>setHi(null)},h('defs',null,bars.map((b,i)=>h('linearGradient',{key:i,id:id+i,x1:0,y1:0,x2:0,y2:1},h('stop',{offset:0,stopColor:pal(b)[0]}),h('stop',{offset:1,stopColor:pal(b)[1]})))),
@@ -411,8 +422,8 @@ function Bars3D({d,L,H=250,f=$k,line,lf=v=>v.toFixed(0)+'%',lab}){const[hi,setHi
     h('defs',null,['p','n'].map(k=>h('linearGradient',{key:k,id:id+k,x1:0,y1:0,x2:0,y2:1},h('stop',{offset:0,stopColor:k==='p'?'#a7c1a1':'#ed7a81'}),h('stop',{offset:1,stopColor:k==='p'?'#547d60':'#972830'})))),
     tk.map((v,k)=>h('g',{key:k},h('line',{x1:pl,x2:W-pr,y1:Y(v),y2:Y(v),stroke:'var(--line)'}),h('text',{x:pl-8,y:Y(v)+4,fill:'var(--mut)',fontSize:10,textAnchor:'end'},f(v)))),
     h('line',{x1:pl,x2:W-pr,y1:z,y2:z,stroke:'var(--mut)',opacity:.7}),
-    d.map((v,i)=>{const x=pl+i*bw+(bw-w)/2,t=Y(v),ps=v>=0,y1=ps?t:z,hh=Math.max(1,Math.abs(t-z)),on=hi===i;return h('g',{key:i,onMouseEnter:()=>setHi(i),className:'rise'+(ps?'':' neg'),style:{animationDelay:i*35+'ms',opacity:hi!=null&&!on?.55:1,transition:'opacity .2s',cursor:'pointer'}},h('rect',{x:x-4,y:pt,width:w+dx+8,height:H-pt-pb,fill:'transparent'}),h('rect',{x,y:y1,width:w,height:hh,fill:'url(#'+id+(ps?'p':'n')+')'}),h('polygon',{points:[x,y1,x+dx,y1+dy,x+w+dx,y1+dy,x+w,y1].join(' '),fill:ps?'#c5d9c0':'#ff9da2'}),h('polygon',{points:[x+w,y1,x+w+dx,y1+dy,x+w+dx,y1+hh+dy,x+w,y1+hh].join(' '),fill:ps?'#476850':'#671c24'}),on&&h('rect',{x:x-2,y:y1-2,width:w+4+dx,height:hh+4,fill:'none',stroke:'#ff6a5c',rx:2}),h('text',{x:x+w/2,y:H-8,fill:on?'var(--fg)':'var(--mut)',fontSize:10,textAnchor:'middle'},L[i]))}),
-    line&&h('g',null,h('polyline',{fill:'none',stroke:'#ff6a5c',strokeWidth:2,pathLength:1,className:'draw',style:{filter:'drop-shadow(0 0 5px #ff6a5c)'},points:line.map((v,i)=>(pl+i*bw+bw/2)+','+LY(v)).join(' ')}),[0,1,2].map(k=>{const v=lmn+(lmx-lmn)*k/2;return h('text',{key:k,x:W-pr+6,y:LY(v)+4,fill:'#ff8a7c',fontSize:10},lf(v))})),
+    d.map((v,i)=>{const x=pl+i*bw+(bw-w)/2,t=Y(v),ps=v>=0,y1=ps?t:z,hh=Math.max(1,Math.abs(t-z)),on=hi===i;return h('g',{key:i,onMouseEnter:()=>setHi(i),className:'rise'+(ps?'':' neg'),style:{animationDelay:i*35+'ms',opacity:hi!=null&&!on?.55:1,transition:'opacity .2s',cursor:'pointer'}},h('rect',{x:x-4,y:pt,width:w+dx+8,height:H-pt-pb,fill:'transparent'}),h('rect',{x,y:y1,width:w,height:hh,fill:'url(#'+id+(ps?'p':'n')+')'}),h('polygon',{points:[x,y1,x+dx,y1+dy,x+w+dx,y1+dy,x+w,y1].join(' '),fill:ps?'#c5d9c0':'#ff9da2'}),h('polygon',{points:[x+w,y1,x+w+dx,y1+dy,x+w+dx,y1+hh+dy,x+w,y1+hh].join(' '),fill:ps?'#476850':'#671c24'}),on&&h('rect',{x:x-2,y:y1-2,width:w+4+dx,height:hh+4,fill:'none',stroke:'var(--fg)',rx:2}),h('text',{x:x+w/2,y:H-8,fill:on?'var(--fg)':'var(--mut)',fontSize:10,textAnchor:'middle'},L[i]))}),
+    line&&h('g',null,h('polyline',{fill:'none',stroke:'var(--revenue)',strokeWidth:2,pathLength:1,className:'draw',points:line.map((v,i)=>(pl+i*bw+bw/2)+','+LY(v)).join(' ')}),[0,1,2].map(k=>{const v=lmn+(lmx-lmn)*k/2;return h('text',{key:k,x:W-pr+6,y:LY(v)+4,fill:'var(--revenue)',fontSize:10},lf(v))})),
     hi!=null&&h('g',{pointerEvents:'none'},h('rect',{x:tx,y:2,width:tt.length*6.2+16,height:22,rx:7,fill:'rgba(0,0,0,.8)',stroke:'var(--line)'}),h('text',{x:tx+8,y:17,fill:'#f6efe2',fontSize:12,fontWeight:600},tt)))}
 function Stack({S,L,H=230,f=$k}){const[off,setOff]=useState([]),[hi,setHi]=useState(null),W=640,pl=48,pr=10,pt=16,pb=26,act=S.filter(s=>!off.includes(s.n)),n=L.length,X=i=>pl+i/(n-1)*(W-pl-pr),tot=Array.from({length:n},(_,i)=>sum(act,s=>s.d[i])),mx=Math.max(...tot,1)*1.1,Y=v=>pt+(1-v/mx)*(H-pt-pb);let base=Array(n).fill(0);
   const layers=act.map(s=>{const top=s.d.map((v,i)=>base[i]+v),path='M'+top.map((v,i)=>X(i)+' '+Y(v)).join('L')+'L'+[...base].reverse().map((v,i)=>X(n-1-i)+' '+Y(v)).join('L')+'Z',res={s,path};base=top;return res});
@@ -423,7 +434,7 @@ function Stack({S,L,H=230,f=$k}){const[off,setOff]=useState([]),[hi,setHi]=useSt
     layers.map(l=>h('path',{key:l.s.n,d:l.path,fill:l.s.c,opacity:.9,stroke:'rgba(0,0,0,.45)',style:{filter:'drop-shadow(0 4px 6px rgba(0,0,0,.5))'}})),
     hi!=null&&h('g',{pointerEvents:'none'},h('line',{x1:X(hi),x2:X(hi),y1:pt,y2:H-pb,stroke:'#fff',opacity:.5,strokeDasharray:'3 3'}),h('rect',{x:Math.max(pl,Math.min(X(hi)-8,W-tt.length*6.2-24)),y:2,width:tt.length*6.2+16,height:22,rx:7,fill:'rgba(0,0,0,.8)',stroke:'var(--line)'}),h('text',{x:Math.max(pl,Math.min(X(hi)-8,W-tt.length*6.2-24))+8,y:17,fill:'#f6efe2',fontSize:12,fontWeight:600},tt))),
     h('div',{className:'flex gap-2 flex-wrap mt-2'},S.map(s=>h('button',{key:s.n,className:'chip !py-0.5 text-xs','aria-pressed':!off.includes(s.n),onClick:()=>setOff(off.includes(s.n)?off.filter(x=>x!==s.n):[...off,s.n])},h('span',{className:'inline-block w-2 h-2 rounded-full mr-1.5',style:{background:s.c}}),s.n))))}
-function Ring({v,label,big,sub,c='#fff4e4'}){const id=useId().replace(/:/g,''),r=38,C=2*Math.PI*r,k=Math.max(0,Math.min(1,v));return h('div',{className:'text-center'},h('svg',{width:104,height:104,viewBox:'0 0 104 104',role:'img','aria-label':label+' '+big},h('defs',null,h('linearGradient',{id,x1:0,y1:0,x2:1,y2:1},h('stop',{offset:0,stopColor:c}),h('stop',{offset:1,stopColor:'#ff6a5c'}))),h('circle',{cx:52,cy:52,r,fill:'none',stroke:'var(--hv)',strokeWidth:9}),h('circle',{cx:52,cy:52,r,fill:'none',stroke:'url(#'+id+')',strokeWidth:9,strokeLinecap:'round',strokeDasharray:C,strokeDashoffset:C*(1-k),transform:'rotate(-90 52 52)',style:{filter:'drop-shadow(0 0 6px rgba(255,106,92,.6))',transition:'stroke-dashoffset 1s cubic-bezier(.2,.8,.2,1)'}}),h('text',{x:52,y:57,textAnchor:'middle',fill:'var(--fg)',fontSize:17,fontWeight:600},big)),h('div',{className:'text-xs font-medium'},label),h('div',{className:'mut text-[11px]'},sub))}
+function Ring({v,label,big,sub,c='var(--revenue)'}){const id=useId().replace(/:/g,''),r=38,C=2*Math.PI*r,k=Math.max(0,Math.min(1,v));return h('div',{className:'text-center'},h('svg',{width:104,height:104,viewBox:'0 0 104 104',role:'img','aria-label':label+' '+big},h('defs',null,h('linearGradient',{id,x1:0,y1:0,x2:1,y2:1},h('stop',{offset:0,stopColor:c}),h('stop',{offset:1,stopColor:'var(--positive)'}))),h('circle',{cx:52,cy:52,r,fill:'none',stroke:'var(--hv)',strokeWidth:9}),h('circle',{cx:52,cy:52,r,fill:'none',stroke:'url(#'+id+')',strokeWidth:9,strokeLinecap:'round',strokeDasharray:C,strokeDashoffset:C*(1-k),transform:'rotate(-90 52 52)',style:{transition:'stroke-dashoffset .35s ease'}}),h('text',{x:52,y:57,textAnchor:'middle',fill:'var(--fg)',fontSize:17,fontWeight:600},big)),h('div',{className:'text-xs font-medium'},label),h('div',{className:'mut text-[11px]'},sub))}
 function Ambient({q}){const ref=useRef();useEffect(()=>{if(q==='off')return;const el=ref.current,r=new THREE.WebGLRenderer({antialias:false,alpha:true});r.setPixelRatio(Math.min(devicePixelRatio,1.5));el.appendChild(r.domElement);const sc=new THREE.Scene(),cam=new THREE.PerspectiveCamera(50,1,.1,100);cam.position.set(0,3,9);
   const gd=new THREE.GridHelper(60,60,0xff6a5c,0x2a2420);gd.position.y=-3;gd.material.transparent=true;gd.material.opacity=.17;sc.add(gd);
   const n=160,pa=new Float32Array(n*3);for(let i=0;i<n;i++){pa[i*3]=(Math.random()-.5)*30;pa[i*3+1]=Math.random()*10-3;pa[i*3+2]=(Math.random()-.5)*30}
@@ -465,7 +476,7 @@ const navContext=(n)=>PAGES.find(g=>g[1].some(p=>p[0]===n))||PAGES[0];
 const FLAT=PAGES.flatMap(g=>g[1]);
 /* ---------- app ---------- */
 function App(){
-  const[D,setD]=useState(load),[pal,setPal]=useState(false),[pq,setPq]=useState(''),[pi,setPi]=useState(0),[cid,setCid]=useState(null),[toast,setToast]=useState(''),[q,setQ]=useState(''),[tf,setTf]=useState('all'),[mo,setMo]=useState('all'),[dr,setDr]=useState(null),[stab,setStab]=useState('workspace'),[rf,setRf]=useState('all'),[nt,setNt]=useState(''),[fm,setFm]=useState(null),[qual,setQual]=useState('high'),[igm,setIgm]=useState(null),[hmode,setHmode]=useState('plan'),[isel,setIsel]=useState(null),[sy,setSy]=useState(null),[ifl,setIfl]=useState('all'),[iq2,setIq2]=useState(''),[signalFilter,setSignalFilter]=useState('All');
+  const[D,setD]=useState(load),[pal,setPal]=useState(false),[pq,setPq]=useState(''),[pi,setPi]=useState(0),[cid,setCid]=useState(null),[toast,setToast]=useState(''),[q,setQ]=useState(''),[tf,setTf]=useState('all'),[mo,setMo]=useState('all'),[dr,setDr]=useState(null),[stab,setStab]=useState('workspace'),[rf,setRf]=useState('all'),[nt,setNt]=useState(''),[fm,setFm]=useState(null),[qual,setQual]=useState('high'),[igm,setIgm]=useState(null),[hmode,setHmode]=useState('plan'),[isel,setIsel]=useState(null),[sy,setSy]=useState(null),[ifl,setIfl]=useState('all'),[iq2,setIq2]=useState(''),[signalFilter,setSignalFilter]=useState('All'),[signalDetail,setSignalDetail]=useState(null);
   const mainRef=useRef(null);
   const K2=calc(D),nav=D.nav,flash=m=>{setToast(m);clearTimeout(flash.t);flash.t=setTimeout(()=>setToast(''),3200)};
   const up=(fn,msg)=>setD(d=>{const n=fn(d);return msg?{...n,log:[{m:msg,ts:Date.now()},...n.log].slice(0,80)}:n});
@@ -475,11 +486,24 @@ function App(){
   useEffect(()=>{try{if(location.hash!=='#/'+D.nav)location.hash='/'+D.nav;const f=FLAT.find(p=>p[0]===D.nav);document.title='RevenueOS — '+(f?f[1]:'')}catch(e){}},[D.nav]);
   useEffect(()=>{const f=()=>{const m=location.hash.replace('#/','');if(m)setD(d=>({...d,nav:m}))};addEventListener('hashchange',f);return()=>removeEventListener('hashchange',f)},[]);
   useEffect(()=>{try{if(D.theme==='system')document.documentElement.removeAttribute('data-theme');else document.documentElement.dataset.theme=D.theme}catch(e){}},[D.theme]);
-  useEffect(()=>{if(reduceM)return;let lg=null,lm=null;const rst=el=>{if(!el)return;el.classList.remove('lit');el.style.setProperty('--rx','0deg');el.style.setProperty('--ry','0deg')};
-    const mv=e=>{const tg=e.target&&e.target.closest?e.target.closest('.gl'):null;if(tg!==lg){rst(lg);lg=tg}if(tg){const r=tg.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;tg.style.setProperty('--mx',x+'px');tg.style.setProperty('--my',y+'px');tg.classList.add('lit');if(tg.classList.contains('tilt')){tg.style.setProperty('--rx',((y/r.height-.5)*-8).toFixed(2)+'deg');tg.style.setProperty('--ry',((x/r.width-.5)*10).toFixed(2)+'deg')}}
-      const mg=e.target&&e.target.closest?e.target.closest('.btn,.chip,.nav'):null;if(lm&&lm!==mg&&window.gsap)gsap.to(lm,{x:0,y:0,duration:.6,ease:'elastic.out(1,.5)',overwrite:'auto'});lm=mg;if(mg&&window.gsap){const r=mg.getBoundingClientRect();gsap.to(mg,{x:(e.clientX-r.left-r.width/2)*.16,y:(e.clientY-r.top-r.height/2)*.26,duration:.3,ease:'power3.out',overwrite:'auto'})}};
-    document.addEventListener('pointermove',mv);return()=>document.removeEventListener('pointermove',mv)},[]);
-  useEffect(()=>{if(reduceM||!window.gsap)return;gsap.fromTo(gsap.utils.toArray('.pg > *'),{y:18,opacity:0},{y:0,opacity:1,duration:.6,stagger:.05,ease:'power3.out',clearProps:'transform,opacity'})},[D.nav]);
+  useEffect(()=>{
+    if(reduceM)return;
+    let active=null;
+    const onMove=e=>{
+      const panel=e.target?.closest?.('.gl');
+      if(panel!==active){active?.classList.remove('lit');active=panel;}
+      if(!panel)return;
+      const box=panel.getBoundingClientRect();
+      panel.style.setProperty('--mx',(e.clientX-box.left)+'px');
+      panel.style.setProperty('--my',(e.clientY-box.top)+'px');
+      panel.classList.add('lit');
+    };
+    const leave=()=>{active?.classList.remove('lit');active=null};
+    document.addEventListener('pointermove',onMove);
+    document.addEventListener('pointerleave',leave);
+    return()=>{document.removeEventListener('pointermove',onMove);document.removeEventListener('pointerleave',leave);leave();};
+  },[]);
+  /* Render navigated pages immediately: no content-obscuring entry animation. */
   useEffect(()=>{const k=e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();setPal(p=>!p);setPq('');setPi(0)}if(e.key==='Escape'){setPal(false);setCid(null);setFm(null)}};addEventListener('keydown',k);return()=>removeEventListener('keydown',k)},[]);
   const ins=insights(D,K2),cust=D.cs.find(c=>c.id===cid);
   /* actions that change shared data */
@@ -522,7 +546,7 @@ function App(){
     }
   };
   const insRow=i=>h('div',{key:i.id,className:'py-3 border-t hair first:border-0'},h('div',{className:'font-medium'},i.t),h('div',{className:'mut text-[13px] mt-0.5 max-w-[62ch]'},i.w),h('div',{className:'flex gap-3 mt-2 flex-wrap items-center'},(i.id==='risk'||i.id==='exp')&&h('button',{className:'btn !min-h-[30px] !py-1 text-xs',onClick:()=>apply(i)},i.id==='risk'?'Simulate follow-ups':'Simulate upgrades'),h('button',{className:'underline underline-offset-4 cursor-pointer text-[13px] mut hover:text-[var(--fg)]',onClick:()=>go(i.to)},i.a)));
-  const Kc=(l,n,f,sub,data,red,tag)=>h('div',{key:l,className:'gl tilt p-4 overflow-hidden'},h('div',{className:'absolute -right-10 -top-10 w-32 h-32 rounded-full blur-3xl pointer-events-none',style:{background:red?'#e5484d':'#d9b59a',opacity:red?.14:.065}}),h('div',{className:'mut text-xs relative'},l),h('div',{className:'flex items-end justify-between gap-2 mt-2 relative'},h('div',{className:'text-2xl leading-none font-semibold tn tracking-tight '+(red?'red':'')},h(Num,{n,f})),data&&h(SpI,{d:data,f,L:MO,c:red?'#e5484d':'#d9b59a'})),h('div',{className:'mt-2.5 text-xs relative flex items-center gap-1.5 flex-wrap'},tag!=null&&h('span',{className:'px-1.5 py-0.5 rounded-md text-[11px] font-medium',style:{background:tag>=0?'rgba(143,174,139,.14)':'rgba(229,72,77,.15)',color:tag>=0?'#a4c39f':'#ef7d81'}},(tag>=0?'▲ ':'▼ ')+Math.abs(tag).toFixed(1)+'%'),h('span',{className:'mut'},sub)));
+  const Kc=(l,n,f,sub,data,red,tag)=>h('div',{key:l,className:'gl p-4 overflow-hidden'},h('div',{className:'mut text-xs relative'},l),h('div',{className:'flex items-end justify-between gap-2 mt-2 relative'},h('div',{className:'text-2xl leading-none font-semibold tn tracking-tight '+(red?'red':'')},h(Num,{n,f})),data&&h(SpI,{d:data,f,L:MO,c:red?'#e5484d':'#d9b59a'})),h('div',{className:'mt-2.5 text-xs relative flex items-center gap-1.5 flex-wrap'},tag!=null&&h('span',{className:'px-1.5 py-0.5 rounded-md text-[11px] font-medium',style:{background:tag>=0?'rgba(143,174,139,.14)':'rgba(229,72,77,.15)',color:tag>=0?'#a4c39f':'#ef7d81'}},(tag>=0?'▲ ':'▼ ')+Math.abs(tag).toFixed(1)+'%'),h('span',{className:'mut'},sub)));
   const pgs={};
   pgs.cc=()=>{
     const rp=Array.from({length:12},()=>[0,0,0,0]);
@@ -556,7 +580,7 @@ function App(){
         Kc('At-risk MRR',riskMrr,$k,K2.risk.length+' accounts need review',null,riskMrr>0)),
       h('div',{className:'grid lg:grid-cols-12 gap-4 items-start'},
         h('section',{className:'gl p-5 lg:col-span-7'},
-          h('div',{className:'flex items-start justify-between gap-3'},
+          h('div',{className:'command-movement-top flex items-start justify-between gap-3'},
             h('div',null,h('h2',{className:'section-title'},'Revenue movement'),h('div',{className:'mut text-xs mt-1'},MO[a5]+' to '+MO[11]+' · Changes in recurring revenue')),
             h('div',{className:'flex gap-4 items-center'},
               h('button',{className:'forecast-link',onClick:()=>go('fc')},'Open Predictions ↗'),
@@ -575,7 +599,7 @@ function App(){
     );
   };
   pgs.rev=()=>{const by=PL.map((p,i)=>({n:p[0],v:sum(K2.act.filter(c=>c.plan===i),c=>c.mrr)})),mx=Math.max(...by.map(x=>x.v)),rg=REG.map(r=>({n:r,v:sum(K2.act.filter(c=>c.reg===r),c=>c.mrr)})),mr=Math.max(...rg.map(x=>x.v)),ind=Object.entries(K2.act.reduce((o,c)=>({...o,[c.ind]:(o[c.ind]||0)+c.mrr}),{})).sort((a,b)=>b[1]-a[1]).slice(0,6);
-    return h('div',{className:'pg space-y-4'},H1('Revenue'),h('div',{className:'gl grid grid-cols-2 lg:grid-cols-4'},Kpi('This month',$k(K2.rev[11]),dl(K2.rev[11],K2.rev[10])),Kpi('MRR',$k(K2.mrr),dl(mm[11],mm[10])),Kpi('12-month revenue',$k(sum(K2.rev)),'After '+$k(sum(K2.ref))+' refunds'),Kpi('Avg revenue per account',$k(K2.arpa),K2.act.length+' accounts')),
+    return h('div',{className:'pg space-y-4'},H1('Revenue',null,'Explore collections, recurring revenue and the financial mix behind performance.'),h('div',{className:'gl grid grid-cols-2 lg:grid-cols-4'},Kpi('This month',$k(K2.rev[11]),dl(K2.rev[11],K2.rev[10])),Kpi('MRR',$k(K2.mrr),dl(mm[11],mm[10])),Kpi('12-month revenue',$k(sum(K2.rev)),'After '+$k(sum(K2.ref))+' refunds'),Kpi('Avg revenue per account',$k(K2.arpa),K2.act.length+' accounts')),
       h('div',{className:'grid lg:grid-cols-3 gap-3 items-start'},
         h('div',{className:'gl p-5 lg:col-span-2'},h('div',{className:'serif text-2xl mb-1'},'Revenue vs MRR'),h('div',{className:'mut text-xs mb-3'},'Collected revenue and recurring subscriptions'),h(Lines,{S:[{n:'Collected',d:K2.rev,c:'var(--fg)',fill:1},{n:'MRR',d:K2.mrrS,c:'var(--revenue)'}],L:MO,H:228})),
         h('div',{className:'gl p-5'},h('div',{className:'serif text-2xl mb-1'},'Revenue snapshot'),
@@ -590,6 +614,53 @@ function App(){
             h(Bar,{v:Math.max(0,K2.prof[11]),mx:K2.rev[11],c:'var(--positive)'}),
             h('div',{className:'font-semibold mt-2'},pc(K2.prof[11]/(K2.rev[11]||1)*100)))))),
       h('div',{className:'grid lg:grid-cols-3 gap-4 items-start'},[['By plan',by],['By region',rg],['By industry',ind.map(x=>({n:x[0],v:x[1]}))]].map(g=>h('div',{key:g[0],className:'gl p-5'},h('div',{className:'serif text-2xl mb-3'},g[0]),g[1].map(x=>h('div',{key:x.n,className:'py-2'},h('div',{className:'flex justify-between text-sm mb-1'},h('span',null,x.n),h('span',{className:'mut tn'},$k(x.v)+' · '+Math.round(x.v/K2.mrr*100)+'%')),h(Bar,{v:x.v,mx:Math.max(...g[1].map(y=>y.v))})))))))};
+  const signalEvidence=(signal)=>{
+    const row=(label,sub,value,action,buttonLabel)=>h('div',{key:label,className:'signal-evidence-row'},
+      h('div',{className:'min-w-0'},action?
+        h('button',{className:'signal-evidence-name',onClick:action},label+' ↗'):
+        h('span',{className:'signal-evidence-name-static'},label),
+        h('div',{className:'mut text-xs mt-1'},sub)),
+      h('span',{className:'signal-evidence-value tn'},value),
+      buttonLabel&&h('span',{className:'sr-only'},buttonLabel));
+    let records=[],summary='';
+    if(signal.id==='risk'){
+      summary='Live account health · scored below 50';
+      records=[...K2.risk].sort((a,b)=>b.mrr-a.mrr).map(c=>
+        row(c.name,'Health '+c.health+' / 100 · '+c.own,$k(c.mrr)+'/mo',()=>setCid(c.id)));
+    }else if(signal.id==='exp'){
+      summary='Eligible accounts · health 80+ on a lower plan';
+      records=K2.act.filter(c=>c.health>=80&&c.plan<3)
+        .sort((a,b)=>(PL[b.plan+1][1]-b.mrr)-(PL[a.plan+1][1]-a.mrr))
+        .map(c=>row(c.name,PL[c.plan][0]+' → '+PL[c.plan+1][0]+' · health '+c.health,
+          '+'+$k(PL[c.plan+1][1]-c.mrr)+'/mo',()=>setCid(c.id)));
+    }else if(signal.id==='inv'){
+      summary='Pending invoices · existing local transaction records';
+      records=[...K2.pend].sort((a,b)=>b.amt-a.amt).map(x=>
+        row(x.party,MO[x.m]+' '+x.d+' · pending',$k(x.amt),
+          ()=>{setQ(x.party);setTf('pending');setMo('all');go('tx')}));
+    }else if(signal.id==='pl'){
+      summary='Probability-weighted opportunities · not guaranteed revenue';
+      records=D.ds.filter(d=>d.stage<4).sort((a,b)=>b.val*PR[b.stage]-a.val*PR[a.stage])
+        .slice(0,7).map(d=>row(d.name,ST[d.stage]+' · '+Math.round(PR[d.stage]*100)+'% assumed likelihood',
+          $k(d.val*PR[d.stage])+' weighted',()=>go('pl')));
+    }else if(signal.id==='gm'){
+      summary='This month · collected revenue less infrastructure and support';
+      records=[row('Collected revenue',MO[11],$k(K2.rev[11]),()=>go('rev')),
+        ...['Infrastructure','Support'].map(category=>row(category,'Recorded operating cost',
+          $k(sum(D.tx.filter(x=>x.type==='expense'&&x.cat===category&&x.m===11),x=>x.amt)),
+          ()=>{setTf('expense');setMo('11');setQ(category);go('tx')}))];
+    }else if(signal.id==='an'){
+      summary='Revenue movement · inspect transactions to investigate timing';
+      records=[10,11].map(m=>row(MO[m],'Collected revenue', $k(K2.rev[m]),
+        ()=>{setMo(String(m));setTf('all');setQ('');go('tx')}));
+    }
+    return h('section',{className:'signal-evidence','aria-label':'Evidence for '+signal.t},
+      h('div',{className:'signal-evidence-header'},
+        h('span',{className:'mut text-xs'},summary),
+        h('span',{className:'mut text-xs'},records.length+' records')),
+      records.length?records:h('p',{className:'mut text-sm py-3'},'No matching records remain in this workspace.'),
+      h('p',{className:'signal-evidence-note'},'Figures recalculate from local sample records. Open a record to inspect its details.'));
+  };
   pgs.ins=()=>{
     const riskAmount=sum(K2.risk,c=>c.mrr),expAccounts=K2.act.filter(c=>c.health>=80&&c.plan<3),
       upside=sum(expAccounts,c=>PL[c.plan+1][1]-c.mrr),invoices=sum(K2.pend,x=>x.amt),
@@ -611,13 +682,18 @@ function App(){
         ['All','Attention','Opportunity','Pipeline','Variance'].map(group=>h('button',{key:group,type:'button',
           className:'signal-filter','aria-pressed':signalFilter===group,onClick:()=>setSignalFilter(group)},
           group,group==='All'?' · '+ordered.length:' · '+ordered.filter(i=>kind(i.id)===group).length))),
-      h('div',{className:'grid md:grid-cols-2 gap-3'},
+      h('div',{className:'grid md:grid-cols-2 gap-3 items-start'},
         ordered.filter(i=>signalFilter==='All'||kind(i.id)===signalFilter).map((i,idx)=>h('article',{key:i.id,className:'gl insight-card'},
           h('div',{className:'flex items-center justify-between gap-3'},
             h('span',{className:'insight-category '+(kind(i.id)==='Attention'?'insight-attention':'')},kind(i.id)),
             h('span',{className:'mut text-[11px]'},String(idx+1).padStart(2,'0'))),
           h('h3',{className:'insight-title'},i.t),
           h('p',{className:'mut text-[13px] leading-relaxed mt-2'},i.w),
+          h('button',{type:'button',className:'signal-drilldown-toggle','aria-expanded':signalDetail===i.id,
+            'aria-controls':'signal-evidence-'+i.id,
+            onClick:()=>setSignalDetail(current=>current===i.id?null:i.id)},
+            signalDetail===i.id?'Hide evidence −':'Inspect evidence +'),
+          signalDetail===i.id&&h('div',{key:i.id,id:'signal-evidence-'+i.id,className:'w-full'},signalEvidence(i)),
           h('div',{className:'flex flex-wrap gap-2 mt-auto pt-5 items-center'},
             h('button',{className:'btn g text-xs',onClick:()=>go(i.to)},i.a+' →'),
             (i.id==='risk'||i.id==='exp')&&h('button',{className:'text-xs mut underline underline-offset-4 hover:text-[var(--fg)] px-2',onClick:()=>apply(i)},i.id==='risk'?'Simulate follow-ups':'Simulate upgrades'))))),
@@ -645,7 +721,7 @@ function App(){
     return h('div',{className:'pg space-y-3 min-w-0'},H1('Pipeline',bt('Add deal',()=>setFm('deal'))),KS([['Open pipeline',$k(sum(open,d=>d.val)),open.length+' open deals'],['Weighted forecast',$k(K2.wp),'Probability by stage'],['Won',$k(sum(won,d=>d.val)),won.length+' deals'],['Win rate',cv+'%',won.length+' won, '+lost.length+' lost']]),h(Board,{ds:D.ds,move:moveDeal}),h('div',{className:'mut text-xs'},'Drag a card to another stage, or use the menu on each card. Moving a deal to Won creates the customer and their first payment, and adds to MRR everywhere.'))};
   pgs.ret=()=>{const act=[...K2.act].sort((a,b)=>a.health-b.health),ex=K2.act.filter(c=>c.health>=80&&c.plan<3);
     return h('div',{className:'pg space-y-4'},H1('Retention'),h('div',{className:'gl grid grid-cols-2 lg:grid-cols-4'},Kpi('Monthly churn',pc(K2.churn),'Last 3 months, logo basis'),Kpi('At-risk MRR',$k(sum(K2.risk,c=>c.mrr)),K2.risk.length+' accounts',true),Kpi('Churned MRR',$k(sum(D.cs.filter(c=>c.ch!=null),c=>c.mrr)),D.cs.filter(c=>c.ch!=null).length+' lost accounts'),Kpi('Expansion potential',$k(sum(ex,c=>PL[c.plan+1][1]-c.mrr)),ex.length+' healthy accounts')),
-      Card('Health distribution','Active accounts by score band',h('div',{className:'grid grid-cols-2 lg:grid-cols-4 gap-4'},[['Critical, under 50',0,49,'#ff6a5c'],['Watch, 50 to 69',50,69,'#ffc7a6'],['Healthy, 70 to 84',70,84,'#b8e0a6'],['Strong, 85 and up',85,100,'var(--fg)']].map(b=>{const m=K2.act.filter(c=>c.health>=b[1]&&c.health<=b[2]);return h('div',{key:b[0]},h('div',{className:'text-xl font-semibold tn'},m.length),h('div',{className:'mut text-xs mb-2'},b[0]+' · '+$k(sum(m,c=>c.mrr))),h(Bar,{v:m.length,mx:K2.act.length,c:b[3]}))}))),h('div',{className:'gl overflow-x-auto'},h('table',{className:'w-full min-w-[780px]'},th(['Account','Health','MRR','Renews','Recommended action','']),h('tbody',null,act.slice(0,12).map(c=>{const rd=Math.max(1,(30-((c.start*11+NOW.getDate())%30))),can=c.health>=80&&c.plan<3;return h('tr',{key:c.id,className:'tr border-b hair'},h('td',{className:'px-4 py-3.5'},h('button',{className:'font-medium cursor-pointer text-left',onClick:()=>setCid(c.id)},c.name),h('div',{className:'mut text-xs'},c.own)),h('td',{className:'px-4'},dot(hc(c.health)),c.health),h('td',{className:'px-4 tn'},$(c.mrr)),h('td',{className:'px-4 mut'},'in '+rd+' days'),h('td',{className:'px-4 mut'},c.health<50?'Schedule a success call':can?'Offer '+PL[c.plan+1][0]+' plan':'Monitor'),h('td',{className:'px-4'},h('div',{className:'flex gap-2 justify-end'},c.health<50&&bt('Log call',()=>rescue(c.id),'g'),can&&bt('Upgrade',()=>setPlan(c.id,c.plan+1),'g'))))})))))};
+      Card('Health distribution','Active accounts by score band',h('div',{className:'grid grid-cols-2 lg:grid-cols-4 gap-4'},[['Critical, under 50',0,49,'var(--red)'],['Watch, 50 to 69',50,69,'var(--revenue)'],['Healthy, 70 to 84',70,84,'var(--positive)'],['Strong, 85 and up',85,100,'var(--fg)']].map(b=>{const m=K2.act.filter(c=>c.health>=b[1]&&c.health<=b[2]);return h('div',{key:b[0]},h('div',{className:'text-xl font-semibold tn'},m.length),h('div',{className:'mut text-xs mb-2'},b[0]+' · '+$k(sum(m,c=>c.mrr))),h(Bar,{v:m.length,mx:K2.act.length,c:b[3]}))}))),h('div',{className:'gl overflow-x-auto'},h('table',{className:'w-full min-w-[780px]'},th(['Account','Health','MRR','Renews','Recommended action','']),h('tbody',null,act.slice(0,12).map(c=>{const rd=Math.max(1,(30-((c.start*11+NOW.getDate())%30))),can=c.health>=80&&c.plan<3;return h('tr',{key:c.id,className:'tr border-b hair'},h('td',{className:'px-4 py-3.5'},h('button',{className:'font-medium cursor-pointer text-left',onClick:()=>setCid(c.id)},c.name),h('div',{className:'mut text-xs'},c.own)),h('td',{className:'px-4'},dot(hc(c.health)),c.health),h('td',{className:'px-4 tn'},$(c.mrr)),h('td',{className:'px-4 mut'},'in '+rd+' days'),h('td',{className:'px-4 mut'},c.health<50?'Schedule a success call':can?'Offer '+PL[c.plan+1][0]+' plan':'Monitor'),h('td',{className:'px-4'},h('div',{className:'flex gap-2 justify-end'},c.health<50&&bt('Log call',()=>rescue(c.id),'g'),can&&bt('Upgrade',()=>setPlan(c.id,c.plan+1),'g'))))})))))};
   pgs.sub=()=>{const rows=PL.map((p,i)=>({p,n:K2.act.filter(c=>c.plan===i).length,m:sum(K2.act.filter(c=>c.plan===i),c=>c.mrr)}));
     return h('div',{className:'pg space-y-4'},H1('Subscriptions'),h('div',{className:'gl grid grid-cols-2 lg:grid-cols-4'},Kpi('MRR',$k(K2.mrr),dl(mm[11],mm[10])),Kpi('ARR',$k(K2.arr),'MRR × 12'),Kpi('ARPA',$k(K2.arpa),'Per active account'),Kpi('Active / cancelled',K2.act.length+' / '+(D.cs.length-K2.act.length),'Lifetime')),
       Card('MRR growth','Last 12 months',h(Lines,{S:[{n:'MRR',d:K2.mrrS,c:'var(--fg)',fill:1}],L:MO,H:190})),h('div',{className:'gl overflow-x-auto'},h('table',{className:'w-full min-w-[560px]'},th(['Plan','List price','Subscribers','MRR','Share']),h('tbody',null,rows.map(r=>h('tr',{key:r.p[0],className:'border-b hair'},h('td',{className:'px-4 py-3.5 font-medium'},r.p[0]),h('td',{className:'px-4 tn'},$(r.p[1])+'/mo'),h('td',{className:'px-4'},r.n),h('td',{className:'px-4 tn'},$(r.m)),h('td',{className:'px-4 w-1/4'},h(Bar,{v:r.m,mx:K2.mrr}))))))),
@@ -655,7 +731,7 @@ function App(){
     h('div',{className:'flex gap-2 flex-wrap'},[['all','All'],['payment','Payments'],['refund','Refunds'],['expense','Expenses'],['pending','Pending']].map(f=>h('button',{key:f[0],className:'chip','aria-pressed':tf===f[0],onClick:()=>setTf(f[0])},f[1]))),
     h('div',{className:'mut text-xs'},txr.length+' records · '+$(sum(txr,x=>x.type==='payment'&&x.st!=='pending'?x.amt:0))+' collected, '+$(sum(txr,x=>x.type==='expense'?x.amt:0))+' spent'),
     h('div',{className:'gl overflow-x-auto'},h('table',{className:'w-full min-w-[760px]'},th(['Date','Type','Party','Category','Status','Amount','']),h('tbody',null,txr.length?txr.slice(0,80).map(x=>h('tr',{key:x.id,className:'tr border-b hair'},h('td',{className:'px-4 py-3 mut'},MO[x.m]+' '+x.d),h('td',{className:'px-4'},x.type),h('td',{className:'px-4'},x.party),h('td',{className:'px-4 mut'},x.cat),h('td',{className:'px-4 '+(x.st==='pending'?'red':'mut')},x.st),h('td',{className:'px-4 tn text-right'},(x.type==='payment'?'+':'−')+$(x.amt)),h('td',{className:'px-4'},h('div',{className:'flex gap-2 justify-end'},x.st==='pending'&&bt('Mark paid',()=>payTx(x.id),'g'),x.type==='payment'&&x.st==='paid'&&bt('Refund',()=>refund(x.id),'g'))))):h('tr',null,h('td',{colSpan:7,className:'py-16 text-center mut'},'No records match these filters.'))))));
-  pgs.pf=()=>{const CC=['#ff6a5c','#ff9a7f','#ffc9a8','#f6efe2','#9b9184'],catS=EXPC.map((e,k)=>({n:e[0],c:CC[k],d:Array.from({length:12},(_,i)=>sum(D.tx.filter(x=>x.type==='expense'&&x.cat===e[0]&&x.m===i),x=>x.amt))})),mg=K2.rev.map((v,i)=>v?K2.prof[i]/v*100:0),cogs=catS[1].d[11]+catS[4].d[11],
+  pgs.pf=()=>{const CC=['#625b55','#8f8b82','#b89b81','#d9b59a','#8fae8b'],catS=EXPC.map((e,k)=>({n:e[0],c:CC[k],d:Array.from({length:12},(_,i)=>sum(D.tx.filter(x=>x.type==='expense'&&x.cat===e[0]&&x.m===i),x=>x.amt))})),mg=K2.rev.map((v,i)=>v?K2.prof[i]/v*100:0),cogs=catS[1].d[11]+catS[4].d[11],
       bridge=[{n:'Revenue',v:K2.rev[11],t:'total'},{n:'Infra+support',v:-cogs},{n:'Gross profit',v:K2.rev[11]-cogs,t:'total'},{n:'Payroll',v:-catS[0].d[11]},{n:'Marketing',v:-catS[2].d[11]},{n:'Software',v:-catS[3].d[11]},{n:'Net profit',v:K2.prof[11],t:'total'}],ratio=K2.cac?K2.ltv/K2.cac:0,pay=K2.cac?K2.cac/((K2.arpa*K2.gm)||1):0;
     return h('div',{className:'pg space-y-3'},H1('Profitability'),KS([['Net profit',$k(K2.prof[11]),'This month',K2.prof[11]<0],['Net margin',pc(mg[11]),'Revenue after all costs'],['Gross margin',pc(K2.gm*100),'After infrastructure and support'],['CAC',$k(K2.cac),'Marketing per new customer'],['LTV : CAC',K2.cac?ratio.toFixed(1)+'×':'n/a','LTV '+$k(K2.ltv)]]),
       h('div',{className:'grid lg:grid-cols-12 gap-3 items-stretch'},h('div',{className:'lg:col-span-8'},Card('Profit and loss by month','Bars are net profit. The coral line is net margin on the right axis.',h(Bars3D,{d:K2.prof,L:MO,H:260,line:mg,lab:'Profit and loss by month'}))),h('div',{className:'lg:col-span-4'},Card('P&L bridge, '+MO[11],'From revenue to net profit',h(Wf,{S:bridge,H:260})))),
@@ -663,13 +739,13 @@ function App(){
   pgs.rp=()=>h('div',{className:'pg space-y-4 max-w-4xl'},H1('Reports',[bt('Download PDF',expPdf),bt('Transactions CSV',expTx,'g'),bt('Customers CSV',expCust,'g')]),
     h('div',{className:'gl p-8'},h('div',{className:'serif text-3xl'},D.ws.name+' · Executive summary'),h('div',{className:'mut text-xs mb-6'},'Generated from current workspace records · '+NOW.toLocaleDateString()),
       h('div',{className:'grid grid-cols-2 lg:grid-cols-4 gap-6'},[['MRR',$k(K2.mrr)],['ARR',$k(K2.arr)],['Profit this month',$k(K2.prof[11])],['Cash',$k(K2.cash)],['Customers',K2.act.length],['Monthly churn',pc(K2.churn)],['Gross margin',pc(K2.gm*100)],['LTV : CAC',K2.cac?(K2.ltv/K2.cac).toFixed(1)+'×':'n/a']].map(x=>h('div',{key:x[0]},h('div',{className:'mut text-xs'},x[0]),h('div',{className:'serif text-3xl tn'},x[1])))),
-      h('div',{className:'mt-6'},h(Lines,{S:[{n:'Revenue',d:K2.rev,c:'var(--fg)',fill:1},{n:'Profit',d:K2.prof,c:'#ff6a5c'}],L:MO,H:200})),h('div',{className:'font-semibold mt-6 mb-1'},'Key findings'),ins.slice(0,5).map(insRow)));
+      h('div',{className:'mt-6'},h(Lines,{S:[{n:'Revenue',d:K2.rev,c:'var(--fg)',fill:1},{n:'Profit',d:K2.prof,c:'var(--positive)'}],L:MO,H:200})),h('div',{className:'font-semibold mt-6 mb-1'},'Key findings'),ins.slice(0,5).map(insRow)));
   const mkU=(id,p)=>setD(d=>({...d,mk:d.mk.map(m=>m.id===id?{...m,...p}:m)}));
   pgs.mk=()=>{const A=D.mk,on=A.filter(m=>m.on),tot=k=>sum(on,m=>m[k]),sp=tot('spend'),won=tot('won'),roi=m=>m.spend?(m.won*K2.arpa*12-m.spend)/m.spend*100:0,F=[['Leads',tot('leads')],['Qualified',tot('qual')],['Won',won]];
     return h('div',{className:'pg space-y-3'},H1('Marketing',bt('New campaign',()=>setFm('camp'))),KS([['Monthly spend',$k(sp),on.length+' active campaigns'],['Leads',tot('leads').toLocaleString(),'Cost per lead '+$(sp/(tot('leads')||1))],['Customers won',won,'CAC '+$k(sp/(won||1))],['First-year ROI',pc((won*K2.arpa*12-sp)/(sp||1)*100),'At '+$k(K2.arpa)+' average MRR'],['CAC payback',(sp/(won||1)/((K2.arpa*K2.gm)||1)).toFixed(1)+' mo','On gross profit']]),
       h('div',{className:'grid lg:grid-cols-12 gap-3 items-stretch'},h('div',{className:'lg:col-span-8'},Card('Campaigns','Edit spend inline. Paused campaigns drop out of the totals.',h('div',{className:'overflow-x-auto'},h('table',{className:'w-full min-w-[640px]'},th(['Campaign','Channel','Spend','Leads','Won','CAC','ROI','']),h('tbody',null,A.map(m=>h('tr',{key:m.id,className:'border-t hair '+(m.on?'':'opacity-50')},h('td',{className:'px-4 py-2.5 font-medium'},m.name),h('td',{className:'px-4 mut'},m.ch),h('td',{className:'px-4'},h('input',{type:'number','aria-label':'Spend for '+m.name,value:m.spend,className:'w-24 !py-1',onChange:e=>mkU(m.id,{spend:Math.max(0,+e.target.value||0)})})),h('td',{className:'px-4 tn'},m.leads),h('td',{className:'px-4 tn'},m.won),h('td',{className:'px-4 tn'},m.won?$k(m.spend/m.won):'n/a'),h('td',{className:'px-4 tn '+(roi(m)<0?'red':'')},pc(roi(m))),h('td',{className:'px-4 text-right'},bt(m.on?'Pause':'Resume',()=>mkU(m.id,{on:!m.on}),'g'))))))))),
         h('div',{className:'lg:col-span-4 space-y-3'},Card('Acquisition funnel','Active campaigns',h('div',null,F.map((f,i)=>h('div',{key:f[0],className:'py-1.5'},h('div',{className:'flex justify-between text-[13px] mb-1'},h('span',null,f[0]),h('span',{className:'mut tn'},f[1].toLocaleString()+(i?' · '+pc(f[1]/(F[i-1][1]||1)*100):''))),h(Bar,{v:f[1],mx:F[0][1]}))))),
-          Card('ROI by channel',null,h('div',null,A.filter(m=>m.on).sort((a,b)=>roi(b)-roi(a)).map(m=>h('div',{key:m.id,className:'py-1.5'},h('div',{className:'flex justify-between text-[13px] mb-1'},h('span',null,m.name),h('span',{className:'mut tn'},pc(roi(m)))),h(Bar,{v:Math.max(roi(m),0),mx:Math.max(...A.map(roi),1),c:roi(m)<0?'#ff6a5c':'var(--fg)'}))))))))};
+          Card('ROI by channel',null,h('div',null,A.filter(m=>m.on).sort((a,b)=>roi(b)-roi(a)).map(m=>h('div',{key:m.id,className:'py-1.5'},h('div',{className:'flex justify-between text-[13px] mb-1'},h('span',null,m.name),h('span',{className:'mut tn'},pc(roi(m)))),h(Bar,{v:Math.max(roi(m),0),mx:Math.max(...A.map(roi),1),c:roi(m)<0?'var(--red)':'var(--positive)'}))))))))};
   const topA=[...D.auto].sort((a,b)=>(b.count||0)-(a.count||0))[0]||{};
   pgs.auto=()=>h('div',{className:'pg space-y-3'},H1('Automations',bt('New workflow',()=>setFm('auto'))),KS([['Workflows',D.auto.length,D.auto.filter(r=>r.on).length+' enabled'],['Executions',(D.runs||[]).length,'Most recent 60 kept'],['Most active',topA.name||'None',(topA.count||0)+' runs']]),
     h('div',{className:'grid lg:grid-cols-12 gap-3 items-stretch'},h('div',{className:'lg:col-span-7'},Card('Workflows','When something happens in RevenueOS, the action runs on its own',D.auto.length?D.auto.map(r=>h('div',{key:r.id,className:'flex items-center gap-3 py-3 border-t hair first:border-0 flex-wrap'},h('button',{role:'switch','aria-checked':r.on,'aria-label':'Enable '+r.name,className:'sw',onClick:()=>up(d=>({...d,auto:d.auto.map(x=>x.id===r.id?{...x,on:!x.on}:x)}),r.name+(r.on?' disabled':' enabled'))}),h('div',{className:'flex-1 min-w-[180px]'},h('div',{className:'font-medium'},r.name),h('div',{className:'mut text-xs'},'When '+TR[r.trig]+', '+AC[r.act]+' · '+(r.count||0)+' runs')),bt('Delete',()=>up(d=>({...d,auto:d.auto.filter(x=>x.id!==r.id)}),'Workflow deleted: '+r.name),'g'))):h('div',{className:'mut py-8 text-center'},'No workflows yet. Create one to automate a repeat task.'))),

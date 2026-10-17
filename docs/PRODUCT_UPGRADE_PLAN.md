@@ -67,3 +67,16 @@ The following is a product-evaluation rubric, not an objective score already ach
 - Base assumption updates change the actual computed figure
 - Intelligence filter category/count and empty state
 - 3D canvas with unchanged interactions and thinner matte columns
+
+## Follow-up visual and intelligence refinement (completed)
+- Shared metric strips and card headings on legacy financial/operations screens
+- Disclosed all four revenue plan colors in the 3D chart legend
+- Replaced decorative floating button magnetism with stable controls
+- Removed 600ms route-wide content fading and prevented misleading blank states
+- Added inspectable, record-backed signal evidence with customer drawer and
+  transaction drill-downs, without additional claims of external data
+- Made expanded signals size to their own contents, rather than stretching
+  adjacent empty cards
+- Unchanged static-demo contracts, operations, forecasting and deep links
+- Verification: 96 automated checks; real desktop/mobile browser interaction,
+  card/legend counts, evidence-to-customer flow and no horizontal overflow

@@ -293,3 +293,61 @@ select option{background:#111;color:#f6efe2}input:focus,textarea:focus,select:fo
   .forecast-svg text{font-size:15px}
   .forecast-scroll-hint{display:block}
 }
+
+
+/* Shared visual foundation across the original app and Prediction Studio. */
+.shared-card{padding:22px 23px}
+.shared-card-heading{font:400 25px/1.13 'Instrument Serif',Georgia,serif;letter-spacing:-.025em;color:var(--fg)}
+.metric-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(185px,100%),1fr));align-items:stretch;overflow:hidden}
+.metric-strip-item{padding:20px 22px;min-width:0;position:relative}
+.metric-strip-item:not(:first-child){border-left:1px solid var(--line)}
+.metric-strip-item .text-2xl{font-size:clamp(22px,2vw,29px);line-height:1.2}
+.pg .gl{transition:border-color .18s ease,background-color .18s ease}
+.pg .gl:hover{border-color:rgba(243,238,227,.22)}
+:root[data-theme="light"] .pg .gl:hover{border-color:rgba(12,10,9,.22)}
+@media(max-width:870px){
+  .metric-strip{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .metric-strip-item:nth-child(odd){border-left:0}
+  .metric-strip-item:nth-child(n+3){border-top:1px solid var(--line)}
+}
+@media(max-width:560px){
+  .shared-card{padding:19px 17px}
+  .metric-strip-item{padding:15px}
+  .shared-card-heading{font-size:23px}
+}
+.signal-drilldown-toggle{font-size:12px;color:var(--revenue);margin-top:15px;cursor:pointer;text-underline-offset:4px;text-decoration:underline;background:transparent;border:0;padding:4px 0;align-self:flex-start}
+.signal-drilldown-toggle:hover{color:var(--fg)}
+.signal-evidence{width:100%;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:9px;padding:11px 0}
+.signal-evidence-header{display:flex;justify-content:space-between;gap:14px;padding-bottom:10px}
+.signal-evidence-row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.signal-evidence-name{font-size:13px;font-weight:500;text-align:left;color:var(--fg);cursor:pointer;border:0;background:transparent;max-width:100%;overflow-wrap:anywhere}
+.signal-evidence-name:hover{color:var(--revenue);text-decoration:underline}
+.signal-evidence-name-static{font-size:13px;font-weight:500}
+.signal-evidence-value{font-size:12px;text-align:right;white-space:nowrap;font-weight:600;color:var(--fg)}
+.signal-evidence-note{font-size:11px;line-height:1.55;color:var(--mut);padding-top:10px}
+@media(prefers-reduced-motion:reduce){
+  .pg .gl{transition:none}
+  .signal-drilldown-toggle{transition:none}
+}
+
+
+/* A revenue breakdown should explain its four plan colors. */
+.skyline-legend-plan{gap:12px}
+.skyline-legend-plan .skyline-plan-entry{display:inline-flex}
+.skyline-legend-plan .skyline-mobile-title{display:none}
+@media(max-width:900px){
+  .skyline-legend-plan{gap:8px}
+  .skyline-legend-plan .skyline-plan-entry{font-size:9px}
+}
+@media(max-width:680px){
+  .skyline-legend-plan .skyline-plan-entry{display:none}
+  .skyline-legend-plan .skyline-mobile-title{display:inline-flex}
+}
+
+
+/* Avoid two-line action collisions on phone-width RevenueOS. */
+@media(max-width:680px){
+  .command-movement-top{flex-direction:column;align-items:flex-start;gap:11px}
+  .command-movement-top>.flex{width:100%;flex-wrap:wrap;gap:12px}
+  .command-movement-top .section-title{font-size:26px}
+}

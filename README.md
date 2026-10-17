@@ -82,3 +82,24 @@ not fitted forecasts or statistical confidence intervals.
 
 Financial Intelligence adds category filters and a link to Predictions. The
 Command Center retains its 3D chart with slimmer matte financial bars.
+
+## Visual consistency and drill-down refinement
+
+The original finance and operations pages now share the same editorial
+section-heading, metric-strip and card styles as the Predictions experience.
+Cards no longer stretch simply to match the tallest neighbor, and profit/
+retention charts use consistent green-for-gains, red-for-losses, champagne-
+for-revenue semantics. These changes do not alter calculations or sample data.
+
+**Intelligence → Inspect evidence** expands a signal into linked live workspace
+records: at-risk customers (health and MRR), eligible account upgrades,
+outstanding invoices, weighted deals, and expense components. Clicking an
+account opens the existing drawer; invoice and cost rows navigate to the
+corresponding filtered transactions. Filtering and simulation actions remain
+unchanged.
+
+**Command Center 3D chart** now includes a legible plan-to-color legend,
+while maintaining revenue/expense, profit, and forecast modes. Phone-sized
+screens display a compact legend without horizontal overflow. Page navigation
+no longer hides content during a staggered entrance animation. This remains
+a browser-local demo rather than a real-time financial system.
