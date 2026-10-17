@@ -57,7 +57,7 @@ function Lines({S,L,f=$k,H=230}){const[hi,setHi]=useState(null),id=useId().repla
     hi!=null&&h('g',null,h('line',{x1:X(hi),x2:X(hi),y1:28,y2:H-24,stroke:'var(--mut)',strokeDasharray:'3 3'}),S.map((s,si)=>s.d[hi]!=null&&h('circle',{key:si,cx:X(hi),cy:Y(s.d[hi]),r:4.5,fill:'var(--bg)',stroke:s.c,strokeWidth:2})),h('rect',{x:Math.max(P,Math.min(X(hi)-8,W-tt.length*6.2-24)),y:3,width:tt.length*6.2+16,height:22,rx:7,fill:'rgba(0,0,0,.78)',stroke:'var(--line)'}),h('text',{x:Math.max(P,Math.min(X(hi)-8,W-tt.length*6.2-24))+8,y:18,fill:'#f6efe2',fontSize:12,fontWeight:600},tt)))}
 function Bars({d,L,H=200}){const[hi,setHi]=useState(null),W=640,mx=Math.max(...d.map(Math.abs),1),z=H-24-(H-44)*(Math.max(...d,0)/(Math.max(...d,0)+Math.abs(Math.min(...d,0))||1)),bw=(W-50)/d.length;
   return h('svg',{viewBox:'0 0 '+W+' '+H,className:'w-full',role:'img','aria-label':'Profit by month'},h('line',{x1:40,x2:W,y1:z,y2:z,stroke:'var(--line)'}),d.map((v,i)=>{const k=Math.abs(v)/mx*(H-60);return h('g',{key:i,onMouseEnter:()=>setHi(i),onMouseLeave:()=>setHi(null)},h('rect',{x:44+i*bw+4,y:v>=0?z-k:z,width:bw-8,height:Math.max(k,1),rx:3,fill:v>=0?'var(--fg)':'#ff6a5c',opacity:hi===i?1:.78}),h('text',{x:44+i*bw+bw/2,y:H-6,fill:'var(--mut)',fontSize:10,textAnchor:'middle'},L[i]),hi===i&&h('text',{x:44+i*bw+bw/2,y:(v>=0?z-k:z+k)+(v>=0?-6:14),fill:'var(--fg)',fontSize:11,textAnchor:'middle',fontWeight:600},$k(v)))}))}
-const Bar=({v,mx,c})=>h('div',{className:'h-2 rounded-full overflow-hidden',style:{background:'var(--hv)',boxShadow:'inset 0 1px 2px rgba(0,0,0,.6)'}},h('div',{className:'h-full rounded-full',style:{width:Math.max(1,Math.min(100,v/(mx||1)*100))+'%',background:c&&c!=='var(--fg)'?'linear-gradient(90deg,'+c+'aa,'+c+')':'linear-gradient(90deg,#cfc4ae,#fff7ea)',boxShadow:'0 0 12px '+(c&&c!=='var(--fg)'?c+'66':'rgba(255,236,210,.4)'),transition:'width .6s cubic-bezier(.2,.8,.2,1)'}}));
+const Bar=({v,mx,c})=>h('div',{className:'h-2 rounded-full overflow-hidden',style:{background:'var(--hv)',boxShadow:'inset 0 1px 2px rgba(0,0,0,.6)'}},h('div',{className:'h-full rounded-full',style:{width:Math.max(1,Math.min(100,v/(mx||1)*100))+'%',background:c&&c!=='var(--fg)'?'linear-gradient(90deg,'+c+'c0,'+c+')':'linear-gradient(90deg,#ad653e,#f5b76f)',boxShadow:'0 0 12px '+(c&&c!=='var(--fg)'?c+'88':'rgba(255,181,110,.42)'),transition:'width .6s cubic-bezier(.2,.8,.2,1)'}}));
 /* ---------- 3D Revenue Universe ---------- */
 /* ---------- 3D Revenue Skyline: legible data first, depth second ---------- */
 function Skyline({rp,ex,pr,fc,L,mode,onBar,q}){
@@ -73,23 +73,23 @@ function Skyline({rp,ex,pr,fc,L,mode,onBar,q}){
     renderer.setClearColor(0x050403,0);
     renderer.outputEncoding=THREE.sRGBEncoding;
     renderer.toneMapping=THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure=1.04;
+    renderer.toneMappingExposure=.87;
     renderer.domElement.setAttribute('aria-hidden','true');
     el.appendChild(renderer.domElement);
     const sc=new THREE.Scene(),root=new THREE.Group();sc.add(root);
     const cam=new THREE.OrthographicCamera(-9,9,3,-3,.1,80);
     cam.position.set(0,4.5,18);cam.lookAt(0,1.2,0);
-    sc.add(new THREE.HemisphereLight(0xffefdd,0x221512,.9));
-    const key=new THREE.DirectionalLight(0xfff3e4,1.65);key.position.set(-5,9,8);sc.add(key);
-    const rim=new THREE.DirectionalLight(0xff7366,1.1);rim.position.set(8,5,-5);sc.add(rim);
+    sc.add(new THREE.HemisphereLight(0xffe0c6,0x180b0b,.68));
+    const key=new THREE.DirectionalLight(0xffe7c1,1.42);key.position.set(-5,9,8);sc.add(key);
+    const rim=new THREE.DirectionalLight(0xff5744,1.3);rim.position.set(8,5,-5);sc.add(rim);
     const grid=new THREE.Group();root.add(grid);
-    const glmat=new THREE.LineBasicMaterial({color:0xc1a99a,transparent:true,opacity:.11,depthWrite:false});
+    const glmat=new THREE.LineBasicMaterial({color:0xc1a99a,transparent:true,opacity:.085,depthWrite:false});
     for(let z=-1.2;z<=1.3;z+=.65){const geo=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-8.1,0,z),new THREE.Vector3(8.1,0,z)]);grid.add(new THREE.Line(geo,glmat));}
     const baseline=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-7.95,.015,.58),new THREE.Vector3(7.95,.015,.58)]),new THREE.LineBasicMaterial({color:0xf4ddca,transparent:true,opacity:.38}));grid.add(baseline);
     const dyn=new THREE.Group();root.add(dyn);
     const R=sceneRef.current;R.dyn=dyn;R.bars=[];R.groups=[];R.mode=mode;R.t0=0;
     const disposeTree=g=>{g.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){const mm=Array.isArray(o.material)?o.material:[o.material];mm.forEach(m=>m.dispose());}});while(g.children.length)g.remove(g.children[0]);};
-    const material=(color,emissive=0x140a08)=>new THREE.MeshStandardMaterial({color,metalness:.24,roughness:.36,emissive,emissiveIntensity:.11});
+    const material=(color,emissive=0x150706)=>new THREE.MeshStandardMaterial({color,metalness:.12,roughness:.42,emissive,emissiveIntensity:.075});
     const bar=(w,h,color)=>{const g=new THREE.BoxGeometry(w,Math.max(.018,h),.36);g.translate(0,Math.max(.018,h)/2,0);return new THREE.Mesh(g,material(color));};
     const edge=(mesh,color,opacity=.35)=>{const e=new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry),new THREE.LineBasicMaterial({color,transparent:true,opacity,depthWrite:false}));mesh.add(e);};
     const top=(g,y,color,w=.5)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,.028,.38),new THREE.MeshBasicMaterial({color}));m.position.y=y;g.add(m);};
@@ -98,36 +98,36 @@ function Skyline({rp,ex,pr,fc,L,mode,onBar,q}){
       const totals=rp.map(row=>row.reduce((a,b)=>a+b,0));
       const count=mode==='profit'?12:12+fc.length,pitch=.84,x0=-(count-1)*pitch/2;
       const maxi=Math.max(1,...totals,...ex,...fc),profitMax=Math.max(1,...pr.map(Math.abs));
-      const unit=2.75/maxi,profitUnit=1.2/profitMax;
-      const shades=[0x695249,0x957568,0xc2a28f,0xf0dac7];
+      const unit=3.72/maxi,profitUnit=1.8/profitMax;
+      const shades=[0x6e3831,0xae5b45,0xe28d5b,0xffc995];
       for(let i=0;i<count;i++){
         const predicted=i>=12,x=x0+i*pitch;
         const group=new THREE.Group();group.position.x=x;group.userData.delay=i*.032;
         group.scale.y=reduceM?1:.001;dyn.add(group);R.groups.push(group);
         const add=(obj)=>{obj.userData={m:i,f:predicted};group.add(obj);R.bars.push(obj);};
         if(mode==='profit'){
-          const v=pr[i],height=Math.max(.022,Math.abs(v)*profitUnit),col=v>=0?0xf0dfd0:0xc65e53;
+          const v=pr[i],height=Math.max(.022,Math.abs(v)*profitUnit),col=v>=0?0xe2a96e:0xdc4237;
           group.position.y=1.12;
           const mesh=bar(.4,height,col);if(v<0)mesh.position.y=-height;
-          edge(mesh,v>=0?0xffead8:0xffa498,.25);add(mesh);
-          top(group,v>=0?height:-height,v>=0?0xfff4e6:0xff9e8b,.41);
+          edge(mesh,v>=0?0xffd8aa:0xff826d,.35);add(mesh);
+          top(group,v>=0?height:-height,v>=0?0xffd9a9:0xff715e,.41);
         }else if(predicted){
-          const height=Math.max(.025,fc[i-12]*unit),mesh=bar(.37,height,0xb65d51);
-          edge(mesh,0xff9987,.72);add(mesh);
-          top(group,height,0xffa08d,.39);
+          const height=Math.max(.025,fc[i-12]*unit),mesh=bar(.4,height,0xc84237);
+          edge(mesh,0xff9880,.72);add(mesh);
+          top(group,height,0xff8e73,.41);
         }else if(mode==='vs'){
-          const values=[totals[i],ex[i]],colors=[0xf1e0d1,0xc7665a];
+          const values=[totals[i],ex[i]],colors=[0xf5b879,0xd84637];
           values.forEach((v,idx)=>{
             const height=Math.max(.022,v*unit),mesh=bar(.21,height,colors[idx]);
-            mesh.position.x=idx? .13:-.13;mesh.scale.z=.88;edge(mesh,idx?0xff9585:0xfff6e7,.2);add(mesh);
+            mesh.position.x=idx? .13:-.13;mesh.scale.z=.88;edge(mesh,idx?0xff8876:0xffdbaf,.25);add(mesh);
           });
         }else{
           let base=0;
-          rp[i].forEach((value,p)=>{if(value<=0)return;const height=Math.max(.012,value*unit),mesh=bar(.4,height,shades[p]);mesh.position.y=base;edge(mesh,0xfff4e9,.14);add(mesh);base+=height;});
-          if(base>0)top(group,base,0xffdaca,.42);
+          rp[i].forEach((value,p)=>{if(value<=0)return;const height=Math.max(.012,value*unit),mesh=bar(.4,height,shades[p]);mesh.position.y=base;edge(mesh,0xffd2a5,.19);add(mesh);base+=height;});
+          if(base>0)top(group,base,0xffd49d,.42);
           /* An expense marker, not a second transparent tower over the revenue. */
           const expenseY=ex[i]*unit;
-          const mark=new THREE.Mesh(new THREE.BoxGeometry(.47,.025,.045),new THREE.MeshBasicMaterial({color:0xff7166,transparent:true,opacity:.85,depthWrite:false}));
+          const mark=new THREE.Mesh(new THREE.BoxGeometry(.47,.025,.045),new THREE.MeshBasicMaterial({color:0xff5547,transparent:true,opacity:.95,depthWrite:false}));
           mark.position.set(0,expenseY,.34);group.add(mark);
         }
       }
@@ -139,7 +139,7 @@ function Skyline({rp,ex,pr,fc,L,mode,onBar,q}){
       const width=Math.max(16.7,4.25*aspect),height=width/aspect;
       root.scale.y=aspect<1.65?2:aspect<2.6?1.35:1;
       cam.left=-width/2;cam.right=width/2;cam.top=height/2;cam.bottom=-height/2;
-      cam.position.set(0,4.5,18);cam.lookAt(0,1.24,0);cam.updateProjectionMatrix();
+      cam.position.set(0,4.45,18);cam.lookAt(0,1.65,0);cam.updateProjectionMatrix();
       renderer.setSize(w,h,false);
     };
     resize();const ro=new ResizeObserver(resize);ro.observe(el);
@@ -211,10 +211,10 @@ function SpI({d,f,L,c='#f6efe2',w=76,hh=34}){const[i,setI]=useState(null),id=use
 function Bars3D({d,L,H=250,f=$k,line,lf=v=>v.toFixed(0)+'%',lab}){const[hi,setHi]=useState(null),id=useId().replace(/:/g,''),W=640,pl=52,pr=line?44:12,pt=18,pb=26,mx=Math.max(...d,1)*1.12,mn=Math.min(...d,0)*1.2,Y=v=>pt+(mx-v)/(mx-mn||1)*(H-pt-pb),n=d.length,bw=(W-pl-pr)/n,w=bw*.52,dx=Math.min(9,bw*.2),dy=-dx*.7,z=Y(0),tk=[0,1,2,3,4].map(k=>mn+(mx-mn)*k/4),lmn=line?Math.min(...line,0):0,lmx=line?Math.max(...line,1):1,LY=v=>pt+(1-(v-lmn)/((lmx-lmn)||1))*(H-pt-pb);
   const tt=hi!=null?L[hi]+'  '+f(d[hi])+(line?'  ·  margin '+lf(line[hi]):''):'',tx=hi!=null?Math.max(pl,Math.min(pl+hi*bw-20,W-tt.length*6.2-24)):0;
   return h('svg',{viewBox:'0 0 '+W+' '+H,className:'w-full',role:'img','aria-label':lab||'Bar chart',onMouseLeave:()=>setHi(null)},
-    h('defs',null,['p','n'].map(k=>h('linearGradient',{key:k,id:id+k,x1:0,y1:0,x2:0,y2:1},h('stop',{offset:0,stopColor:k==='p'?'#fff6e8':'#ff8a7c'}),h('stop',{offset:1,stopColor:k==='p'?'#b9ad98':'#c43d33'})))),
+    h('defs',null,['p','n'].map(k=>h('linearGradient',{key:k,id:id+k,x1:0,y1:0,x2:0,y2:1},h('stop',{offset:0,stopColor:k==='p'?'#ffd29d':'#ff7563'}),h('stop',{offset:1,stopColor:k==='p'?'#9f6843':'#8f241f'})))),
     tk.map((v,k)=>h('g',{key:k},h('line',{x1:pl,x2:W-pr,y1:Y(v),y2:Y(v),stroke:'var(--line)'}),h('text',{x:pl-8,y:Y(v)+4,fill:'var(--mut)',fontSize:10,textAnchor:'end'},f(v)))),
     h('line',{x1:pl,x2:W-pr,y1:z,y2:z,stroke:'var(--mut)',opacity:.7}),
-    d.map((v,i)=>{const x=pl+i*bw+(bw-w)/2,t=Y(v),ps=v>=0,y1=ps?t:z,hh=Math.max(1,Math.abs(t-z)),on=hi===i;return h('g',{key:i,onMouseEnter:()=>setHi(i),className:'rise'+(ps?'':' neg'),style:{animationDelay:i*35+'ms',opacity:hi!=null&&!on?.55:1,transition:'opacity .2s',cursor:'pointer'}},h('rect',{x:x-4,y:pt,width:w+dx+8,height:H-pt-pb,fill:'transparent'}),h('rect',{x,y:y1,width:w,height:hh,fill:'url(#'+id+(ps?'p':'n')+')'}),h('polygon',{points:[x,y1,x+dx,y1+dy,x+w+dx,y1+dy,x+w,y1].join(' '),fill:ps?'#fffaf0':'#ffb3a8'}),h('polygon',{points:[x+w,y1,x+w+dx,y1+dy,x+w+dx,y1+hh+dy,x+w,y1+hh].join(' '),fill:ps?'#8d826f':'#9a2c25'}),on&&h('rect',{x:x-2,y:y1-2,width:w+4+dx,height:hh+4,fill:'none',stroke:'#ff6a5c',rx:2}),h('text',{x:x+w/2,y:H-8,fill:on?'var(--fg)':'var(--mut)',fontSize:10,textAnchor:'middle'},L[i]))}),
+    d.map((v,i)=>{const x=pl+i*bw+(bw-w)/2,t=Y(v),ps=v>=0,y1=ps?t:z,hh=Math.max(1,Math.abs(t-z)),on=hi===i;return h('g',{key:i,onMouseEnter:()=>setHi(i),className:'rise'+(ps?'':' neg'),style:{animationDelay:i*35+'ms',opacity:hi!=null&&!on?.55:1,transition:'opacity .2s',cursor:'pointer'}},h('rect',{x:x-4,y:pt,width:w+dx+8,height:H-pt-pb,fill:'transparent'}),h('rect',{x,y:y1,width:w,height:hh,fill:'url(#'+id+(ps?'p':'n')+')'}),h('polygon',{points:[x,y1,x+dx,y1+dy,x+w+dx,y1+dy,x+w,y1].join(' '),fill:ps?'#ffe0b5':'#ff9987'}),h('polygon',{points:[x+w,y1,x+w+dx,y1+dy,x+w+dx,y1+hh+dy,x+w,y1+hh].join(' '),fill:ps?'#6a402b':'#701c18'}),on&&h('rect',{x:x-2,y:y1-2,width:w+4+dx,height:hh+4,fill:'none',stroke:'#ff6a5c',rx:2}),h('text',{x:x+w/2,y:H-8,fill:on?'var(--fg)':'var(--mut)',fontSize:10,textAnchor:'middle'},L[i]))}),
     line&&h('g',null,h('polyline',{fill:'none',stroke:'#ff6a5c',strokeWidth:2,pathLength:1,className:'draw',style:{filter:'drop-shadow(0 0 5px #ff6a5c)'},points:line.map((v,i)=>(pl+i*bw+bw/2)+','+LY(v)).join(' ')}),[0,1,2].map(k=>{const v=lmn+(lmx-lmn)*k/2;return h('text',{key:k,x:W-pr+6,y:LY(v)+4,fill:'#ff8a7c',fontSize:10},lf(v))})),
     hi!=null&&h('g',{pointerEvents:'none'},h('rect',{x:tx,y:2,width:tt.length*6.2+16,height:22,rx:7,fill:'rgba(0,0,0,.8)',stroke:'var(--line)'}),h('text',{x:tx+8,y:17,fill:'#f6efe2',fontSize:12,fontWeight:600},tt)))}
 function Stack({S,L,H=230,f=$k}){const[off,setOff]=useState([]),[hi,setHi]=useState(null),W=640,pl=48,pr=10,pt=16,pb=26,act=S.filter(s=>!off.includes(s.n)),n=L.length,X=i=>pl+i/(n-1)*(W-pl-pr),tot=Array.from({length:n},(_,i)=>sum(act,s=>s.d[i])),mx=Math.max(...tot,1)*1.1,Y=v=>pt+(1-v/mx)*(H-pt-pb);let base=Array(n).fill(0);
@@ -316,7 +316,7 @@ function App(){
     const rk=[...K2.risk].sort((a,b)=>b.mrr-a.mrr).slice(0,5),last=c=>c.notes.length?Math.round((Date.now()-c.notes[0].ts)/864e5)+'d ago':'no contact logged',proj=Array.from({length:13},(_,k)=>K2.mrr*Math.pow(1+(D.as.g-D.as.c+D.as.e)/100,k));
     return h('div',{className:'pg space-y-3'},
       h('div',{className:'flex items-center gap-3 flex-wrap'},h('h1',{className:'text-xl font-semibold tracking-tight mr-auto'},'Command Center'),h('span',{className:'mut text-xs'},D.ws.name+' · '+NOW.toLocaleDateString([],{month:'long',year:'numeric'}))),
-      h('div',{className:'gl relative overflow-hidden',style:{height:'clamp(380px,54vh,500px)'}},
+      h('div',{className:'gl relative overflow-hidden',style:{height:'clamp(360px,47vh,440px)'}},
         h(Skyline,{rp,ex:K2.exp,pr:K2.prof,fc:fcv,L:L18,mode:hmode,q:qual,onBar:(m,f)=>{if(f)go('fc');else{setMo(String(m));setTf('all');setQ('');go('tx')}}}),
         h('div',{className:'absolute inset-x-0 top-0 h-px pointer-events-none',style:{background:'linear-gradient(90deg,transparent,#ff6a5c,#fff4e4,#ff6a5c,transparent)',backgroundSize:'200% 100%',animation:'shift 6s linear infinite'}}),h('div',{className:'skyline-header absolute left-5 top-4 pointer-events-none'},h('div',{className:'mut text-xs'},'Revenue, last 12 months'),h('div',{className:'text-4xl font-semibold tn tracking-tight mt-1'},$k(rev12)),h('div',{className:'flex gap-4 mt-2 text-[13px]'},h('span',null,h('span',{className:'mut'},'Expenses '),$k(exp12)),h('span',null,h('span',{className:'mut'},'Profit '),h('span',{className:K2.prof.reduce((a,b)=>a+b,0)<0?'red':''},$k(sum(K2.prof)))),h('span',null,h('span',{className:'mut'},'MRR '),$k(K2.mrr)))),
         h('div',{className:'skyline-controls absolute right-4 top-4 flex gap-1.5 flex-wrap justify-end'},[['plan','Revenue by plan'],['vs','Revenue vs expenses'],['profit','Profit']].map(x=>h('button',{key:x[0],className:'chip !py-1 !px-3 text-xs','aria-pressed':hmode===x[0],onClick:()=>setHmode(x[0])},x[1]))),
