@@ -1,0 +1,12 @@
+{
+  "name": "revenueos",
+  "version": "1.0.0",
+  "description": "RevenueOS: a 3D revenue intelligence dashboard (React, Three.js, GSAP, Tailwind via CDN). No build step.",
+  "private": true,
+  "scripts": {
+    "start": "npx --yes serve .",
+    "test": "node tests/smoke.test.js",
+    "check": "node --check src/app.js"
+  },
+  "engines": { "node": ">=18" }
+}
