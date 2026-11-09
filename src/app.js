@@ -255,14 +255,15 @@ const Bar=({v,mx,c})=>h('div',{className:'h-2 rounded-full overflow-hidden',styl
 /* ---------- 3D Revenue Universe ---------- */
 /* ---------- 3D Revenue Skyline: legible data first, depth second ---------- */
 function Skyline({rp,ex,pr,fc,L,mode,onBar,q}){
-  const ref=useRef(),sceneRef=useRef({}),[tip,setTip]=useState(null);
+  const ref=useRef(),sceneRef=useRef({}),[tip,setTip]=useState(null),[unavailable,setUnavailable]=useState(false);
   sceneRef.current.onBar=onBar;
   const sig=JSON.stringify([rp,ex,pr,fc,mode]);
   useEffect(()=>{
     const el=ref.current;
-    if(!el||!window.THREE)return;
+    if(!el)return;
+    if(!window.THREE){setUnavailable(true);return;}
     let renderer;
-    try{renderer=new THREE.WebGLRenderer({antialias:q!=='low',alpha:true,powerPreference:'high-performance'});}catch(e){el.textContent='3D chart unavailable on this device';return;}
+    try{renderer=new THREE.WebGLRenderer({antialias:q!=='low',alpha:true,powerPreference:'high-performance'});setUnavailable(false);}catch(e){setUnavailable(true);return;}
     renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,q==='low'?1:1.5));
     renderer.setClearColor(0x050505,0);
     renderer.outputEncoding=THREE.sRGBEncoding;
@@ -377,7 +378,8 @@ function Skyline({rp,ex,pr,fc,L,mode,onBar,q}){
   useEffect(()=>{sceneRef.current.build?.(rp,ex,pr,fc,L,mode);setTip(null);},[sig,q]);
   const isProfit=mode==='profit',months=isProfit?L.slice(0,12):L,cols=months.length;
   return h('div',{className:'skyline-stage'},
-    h('div',{className:'skyline-plot',ref,role:'img','aria-label':'Interactive 3D revenue columns; select a month for transactions'}),
+    h('div',{className:'skyline-plot',ref,role:'img','aria-label':'Interactive 3D revenue columns; select a month for transactions',style:unavailable?{display:'none'}:undefined}),
+    unavailable&&h('div',{className:'px-3 py-4'},h('p',{className:'mut text-xs mb-2'},'Showing a 2D chart because 3D graphics are unavailable on this device.'),h(Bars3D,{d:isProfit?pr:rp.map(x=>sum(x)).concat(fc||[]),L:months,lab:isProfit?'Profit by month':'Revenue by month'})),
     h('div',{className:'skyline-timeline',style:{gridTemplateColumns:`repeat(${cols},minmax(0,1fr))`}},months.map((m,i)=>h('button',{key:i,type:'button',className:'skyline-month '+(i>=12?'skyline-month-future':''),'aria-label':m+(i>=12?' forecast':' transactions'),title:m,onClick:()=>onBar(i,i>=12)},m))),
     h('div',{className:'skyline-legend'+(mode==='plan'?' skyline-legend-plan':'')},
       mode==='plan'?
@@ -435,7 +437,7 @@ function Stack({S,L,H=230,f=$k}){const[off,setOff]=useState([]),[hi,setHi]=useSt
     hi!=null&&h('g',{pointerEvents:'none'},h('line',{x1:X(hi),x2:X(hi),y1:pt,y2:H-pb,stroke:'#fff',opacity:.5,strokeDasharray:'3 3'}),h('rect',{x:Math.max(pl,Math.min(X(hi)-8,W-tt.length*6.2-24)),y:2,width:tt.length*6.2+16,height:22,rx:7,fill:'rgba(0,0,0,.8)',stroke:'var(--line)'}),h('text',{x:Math.max(pl,Math.min(X(hi)-8,W-tt.length*6.2-24))+8,y:17,fill:'#f6efe2',fontSize:12,fontWeight:600},tt))),
     h('div',{className:'flex gap-2 flex-wrap mt-2'},S.map(s=>h('button',{key:s.n,className:'chip !py-0.5 text-xs','aria-pressed':!off.includes(s.n),onClick:()=>setOff(off.includes(s.n)?off.filter(x=>x!==s.n):[...off,s.n])},h('span',{className:'inline-block w-2 h-2 rounded-full mr-1.5',style:{background:s.c}}),s.n))))}
 function Ring({v,label,big,sub,c='var(--revenue)'}){const id=useId().replace(/:/g,''),r=38,C=2*Math.PI*r,k=Math.max(0,Math.min(1,v));return h('div',{className:'text-center'},h('svg',{width:104,height:104,viewBox:'0 0 104 104',role:'img','aria-label':label+' '+big},h('defs',null,h('linearGradient',{id,x1:0,y1:0,x2:1,y2:1},h('stop',{offset:0,stopColor:c}),h('stop',{offset:1,stopColor:'var(--positive)'}))),h('circle',{cx:52,cy:52,r,fill:'none',stroke:'var(--hv)',strokeWidth:9}),h('circle',{cx:52,cy:52,r,fill:'none',stroke:'url(#'+id+')',strokeWidth:9,strokeLinecap:'round',strokeDasharray:C,strokeDashoffset:C*(1-k),transform:'rotate(-90 52 52)',style:{transition:'stroke-dashoffset .35s ease'}}),h('text',{x:52,y:57,textAnchor:'middle',fill:'var(--fg)',fontSize:17,fontWeight:600},big)),h('div',{className:'text-xs font-medium'},label),h('div',{className:'mut text-[11px]'},sub))}
-function Ambient({q}){const ref=useRef();useEffect(()=>{if(q==='off')return;const el=ref.current,r=new THREE.WebGLRenderer({antialias:false,alpha:true});r.setPixelRatio(Math.min(devicePixelRatio,1.5));el.appendChild(r.domElement);const sc=new THREE.Scene(),cam=new THREE.PerspectiveCamera(50,1,.1,100);cam.position.set(0,3,9);
+function Ambient({q}){const ref=useRef();useEffect(()=>{if(q==='off'||!window.THREE)return;const el=ref.current;let r;try{r=new THREE.WebGLRenderer({antialias:false,alpha:true})}catch(e){return}r.setPixelRatio(Math.min(devicePixelRatio,1.5));el.appendChild(r.domElement);const sc=new THREE.Scene(),cam=new THREE.PerspectiveCamera(50,1,.1,100);cam.position.set(0,3,9);
   const gd=new THREE.GridHelper(60,60,0xff6a5c,0x2a2420);gd.position.y=-3;gd.material.transparent=true;gd.material.opacity=.17;sc.add(gd);
   const n=160,pa=new Float32Array(n*3);for(let i=0;i<n;i++){pa[i*3]=(Math.random()-.5)*30;pa[i*3+1]=Math.random()*10-3;pa[i*3+2]=(Math.random()-.5)*30}
   const pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.BufferAttribute(pa,3));const pts=new THREE.Points(pg,new THREE.PointsMaterial({color:0xd9b59a,size:.04,transparent:true,opacity:.34}));sc.add(pts);
