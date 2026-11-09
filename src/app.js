@@ -379,8 +379,8 @@ function Skyline({rp,ex,pr,fc,L,mode,onBar,q}){
   const isProfit=mode==='profit',months=isProfit?L.slice(0,12):L,cols=months.length;
   return h('div',{className:'skyline-stage'},
     h('div',{className:'skyline-plot',ref,role:'img','aria-label':'Interactive 3D revenue columns; select a month for transactions',style:unavailable?{display:'none'}:undefined}),
-    unavailable&&h('div',{className:'skyline-fallback'},h('p',{className:'mut text-xs'},isProfit?'2D view: monthly profit and loss':'2D view: total revenue and forecast; plan and expense breakdowns need 3D'),h('div',{className:'skyline-fallback-chart'},h(Bars3D,{d:isProfit?pr:rp.map(x=>sum(x)).concat(fc||[]),L:months,H:180,hideLabels:true,stretch:true,lab:isProfit?'Profit by month':'Revenue by month'}))),
-    h('div',{className:'skyline-timeline',style:{gridTemplateColumns:`repeat(${cols},minmax(0,1fr))`}},months.map((m,i)=>h('button',{key:i,type:'button',className:'skyline-month '+(i>=12?'skyline-month-future':''),'aria-label':m+(i>=12?' forecast':' transactions'),title:m,onClick:()=>onBar(i,i>=12)},m))),
+    unavailable&&h('div',{className:'skyline-fallback'},h('p',{className:'mut text-xs'},isProfit?'2D view: monthly profit and loss':'2D: collected revenue, then projected MRR. Plan and expense breakdowns need 3D.'),h('div',{className:'skyline-fallback-chart'},h(Bars3D,{d:isProfit?pr:rp.map(x=>sum(x)).concat(fc||[]),L:months,H:180,hideLabels:true,stretch:true,lab:isProfit?'Profit by month':'Revenue by month'}))),
+    h('div',{className:'skyline-timeline',style:{gridTemplateColumns:`repeat(${cols},minmax(0,1fr))`,...(unavailable?{left:'8.125%',right:'1.875%'}:{})}},months.map((m,i)=>h('button',{key:i,type:'button',className:'skyline-month '+(i>=12?'skyline-month-future':''),'aria-label':m+(i>=12?' forecast':' transactions'),title:m,onClick:()=>onBar(i,i>=12)},m))),
     !unavailable&&h('div',{className:'skyline-legend'+(mode==='plan'?' skyline-legend-plan':'')},
       mode==='plan'?
         [h('span',{key:'compact',className:'skyline-mobile-title'},h('i',{className:'skyline-dot skyline-ivory'}),'Revenue by plan'),
