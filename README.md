@@ -13,7 +13,7 @@ Or open `index.html` directly. It needs internet for the CDN scripts and fonts (
 ## Test it
 
 ```
-npm test           # 57 end-to-end checks, no dependencies
+npm test           # 96 smoke checks, no dependencies
 npm run check      # syntax check
 ```
 
